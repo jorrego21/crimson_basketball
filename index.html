@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Harvard Crimson Men's Basketball</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--cr:#A41034;--crL:rgba(164,16,52,0.08);--dark:#1A1A1A;--bg:#F2EFEC;--white:#fff;--gL:#E8E2DC;--gM:#9B9490;--text:#1A1A1A;--soft:#5A5550}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+/* HEADER */
+.site-hdr{background:var(--dark);color:#fff;padding:18px 40px;display:flex;align-items:center;gap:16px}
+.hdr-bar{width:4px;height:36px;background:var(--cr);border-radius:2px;flex-shrink:0}
+.hdr-text h1{font-size:20px;font-weight:700;letter-spacing:-0.3px}
+.hdr-text p{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;opacity:0.5;margin-top:2px}
+/* ROSTER */
+.roster-intro{padding:24px 40px 10px;font-size:13px;color:var(--soft)}
+.roster-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;padding:12px 40px 48px}
+/* PLAYER CARD */
+.pcard{background:var(--white);border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.pcard:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(164,16,52,.14)}
+.pcard img{width:100%;aspect-ratio:2/3;object-fit:cover;object-position:top center;background:var(--gL);display:block}
+.pcard-body{padding:14px 16px 16px}
+.pcard-num{font-size:10px;color:var(--cr);font-weight:700;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:2px}
+.pcard-name{font-size:16px;font-weight:700;margin-bottom:3px;line-height:1.2}
+.pcard-meta{font-size:12px;color:var(--soft);margin-bottom:12px}
+.pcard-stats{display:flex;border-top:1px solid var(--gL);padding-top:10px;gap:0}
+.pcard-stat{flex:1;text-align:center}
+.pcard-stat-v{font-size:15px;font-weight:700}
+.pcard-stat-l{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--gM);margin-top:1px}
+/* PAGE 2 */
+#pg2{display:none}
+.player-hdr{background:var(--dark);color:#fff;padding:16px 40px;display:flex;align-items:center;gap:20px}
+#back-btn{background:none;border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;transition:background .15s}
+#back-btn:hover{background:rgba(255,255,255,.1)}
+.player-hdr-info{display:flex;align-items:baseline;gap:12px}
+.player-hdr-name{font-size:22px;font-weight:700}
+.player-hdr-sub{font-size:13px;opacity:.55}
+/* PANELS */
+.panels{padding:28px 40px;display:flex;flex-direction:column;gap:28px}
+.panel{background:var(--white);border-radius:14px;padding:24px 28px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.panel-title{font-size:13px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;color:var(--cr);margin-bottom:4px}
+.panel-sub{font-size:12px;color:var(--soft);margin-bottom:20px}
+/* BUCKETS */
+.buckets{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:0}
+.bucket{background:var(--bg);border-radius:10px;padding:14px 12px}
+.bucket-lbl{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;color:var(--gM);margin-bottom:10px}
+.m-primary{background:var(--white);border-radius:8px;padding:12px 10px;text-align:center;cursor:pointer;border:2px solid transparent;transition:border-color .15s,background .15s;margin-bottom:8px}
+.m-primary:hover{border-color:var(--cr)}
+.m-primary.active{border-color:var(--cr);background:var(--crL)}
+.m-primary .m-val{font-size:22px;font-weight:700;line-height:1}
+.m-primary .m-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--soft);margin-top:4px}
+.m-sec-row{display:flex;gap:6px}
+.m-cell{flex:1;background:var(--white);border-radius:8px;padding:9px 8px;text-align:center;cursor:pointer;border:2px solid transparent;transition:border-color .15s,background .15s}
+.m-cell:hover{border-color:var(--cr)}
+.m-cell.active{border-color:var(--cr);background:var(--crL)}
+.m-cell .m-val{font-size:14px;font-weight:700;line-height:1}
+.m-cell .m-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--soft);margin-top:3px;display:flex;align-items:center;justify-content:center;gap:3px}
+/* TOOLTIP */
+.tip-wrap{position:relative;display:inline-flex;align-items:center;gap:3px}
+.tip-icon{font-size:9px;color:var(--gM);cursor:help;background:var(--gL);border-radius:50%;width:13px;height:13px;display:inline-flex;align-items:center;justify-content:center;line-height:1}
+.tip-box{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#2A2A2A;color:#fff;font-size:11px;line-height:1.45;padding:9px 12px;border-radius:8px;width:260px;z-index:200;pointer-events:none;font-weight:400;text-transform:none;letter-spacing:0}
+.tip-box::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#2A2A2A}
+.tip-wrap:hover .tip-box{display:block}
+/* CHART AREA */
+.chart-area{margin-top:16px;border-top:1px solid var(--gL);padding-top:20px;display:none}
+.chart-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.chart-note{font-size:11px;color:var(--soft);margin-bottom:16px}
+.chart-wrap{position:relative;height:320px}
+/* ARC */
+.arc-wrap{position:relative;height:280px}
+/* YOY */
+.yoy-no-data{font-size:14px;color:var(--soft);font-style:italic;padding:24px 0}
+/* WELCOME */
+.welcome-panel{padding:20px 40px 0}
+.welcome-panel p{font-size:13px;color:var(--soft);line-height:1.7;max-width:720px}
+.welcome-panel p+p{margin-top:5px}
+.welcome-panel a{color:var(--cr);text-decoration:none}
+.welcome-panel a:hover{text-decoration:underline}
+/* FOOTER */
+.site-footer{padding:20px 40px 28px;font-size:11px;color:var(--gM);border-top:1px solid var(--gL);margin-top:8px}
+.site-footer a{color:var(--gM);text-decoration:none}
+.site-footer a:hover{color:var(--soft)}
+/* SNAP CTA */
+.snap-cta{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--soft);background:var(--bg);border-radius:20px;padding:5px 12px;margin-bottom:4px;border:1px solid var(--gL)}
+.snap-cta-dot{width:7px;height:7px;border-radius:50%;background:var(--cr);flex-shrink:0}
+/* DROPDOWN */
+.player-selectors{padding:14px 40px;display:flex;align-items:center;gap:20px;background:var(--white);border-bottom:1px solid var(--gL)}
+.sel-group{display:flex;align-items:center;gap:8px}
+.sel-lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gM);font-weight:700;white-space:nowrap}
+.sel-wrap{position:relative;display:inline-flex;align-items:center}
+.sel-wrap::after{content:'▾';position:absolute;right:8px;color:var(--gM);pointer-events:none;font-size:10px}
+.sel-wrap select{background:var(--bg);border:1px solid var(--gL);color:var(--text);padding:6px 24px 6px 10px;border-radius:6px;font-size:13px;cursor:pointer;appearance:none;-webkit-appearance:none;font-family:inherit;max-width:220px}
+.sel-wrap select option{background:var(--white);color:var(--text)}
+.sel-sep{font-size:18px;color:var(--gL);font-weight:300}
+/* M-DESC */
+.m-desc{font-size:8.5px;color:var(--gM);margin-top:3px;line-height:1.3;font-weight:400;font-style:italic;text-transform:none;letter-spacing:0}
+/* COMP PANEL */
+.comp-placeholder{padding:32px 0;text-align:center}
+.comp-placeholder p{font-size:13px;color:var(--soft);margin-bottom:10px}
+.comp-hint{font-size:11px;color:var(--gM);line-height:1.6;display:block;margin-top:6px}
+.chart-guide{font-size:11px;color:var(--soft);margin-bottom:14px;padding:8px 12px;background:var(--bg);border-radius:6px;line-height:1.5;border-left:3px solid var(--gL)}
+/* YOY redesign */
+.yoy-grid-new{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.yoy-card-new{background:var(--bg);border-radius:12px;padding:18px 16px}
+.yoy-metric-nm{font-size:9px;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;color:var(--gM);margin-bottom:5px}
+.yoy-q-new{font-size:12px;color:var(--soft);line-height:1.4;margin-bottom:14px;min-height:30px}
+.yoy-delta-big{font-size:26px;font-weight:800;line-height:1;margin-bottom:12px}
+.yoy-delta-big.up{color:#1A7A3A}
+.yoy-delta-big.down{color:#C0392B}
+.yoy-delta-big.flat{color:var(--gM)}
+.yoy-delta-big.neutral-up{color:#1A7A3A}
+.yoy-delta-big.neutral-down{color:#C0392B}
+.yoy-from-to{display:flex;align-items:center;gap:10px}
+.yoy-side{text-align:center}
+.yoy-side-val{font-size:16px;font-weight:700;color:var(--text)}
+.yoy-side-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--gM);margin-top:2px}
+.yoy-from-arrow{font-size:13px;color:var(--gM)}
+.pcard.bench{opacity:0.72}
+.pcard.bench .pcard-num{color:var(--gM)}
+.pcard.bench .pcard-stat-v{color:var(--soft)}
+.arc-meta{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.arc-meta-stat{background:var(--bg);border-radius:10px;padding:11px 16px;min-width:110px}
+.arc-meta-val{font-size:20px;font-weight:700;color:var(--cr);line-height:1}
+.arc-meta-lbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--gM);margin-top:3px}
+.arc-meta-sub{font-size:11px;color:var(--soft);margin-top:2px}
+.arc-legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;padding:7px 12px;background:var(--bg);border-radius:8px;align-items:center}
+.arc-legend-grp{display:flex;gap:8px;align-items:center}
+.arc-legend-grp-lbl{font-size:8.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--gM);font-weight:700;margin-right:2px}
+.arc-legend-item{font-size:10px;color:var(--soft);display:flex;align-items:center;gap:4px}
+.arc-legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0}
+.arc-legend-dot.win{background:var(--cr)}
+.arc-legend-dot.loss{background:transparent;border:2px solid var(--cr);width:8px;height:8px}
+.arc-legend-sep{width:1px;height:14px;background:var(--gL);flex-shrink:0}
+.share-btn{margin-left:auto;background:none;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.65);padding:5px 14px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s;font-family:inherit;white-space:nowrap}
+.share-btn:hover{background:rgba(255,255,255,0.1);color:#fff}
+.team-summary{padding:4px 40px 14px;display:flex;gap:10px;flex-wrap:wrap}
+.ts-chip{background:var(--white);border:1px solid var(--gL);border-radius:8px;padding:9px 16px}
+.ts-chip-val{font-size:15px;font-weight:700}
+.ts-chip-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--gM);margin-top:2px}
+.game-log-btn{display:block;width:100%;background:none;border:none;border-top:1px solid var(--gL);padding:8px 0 0;font-size:11px;color:var(--soft);cursor:pointer;text-align:center;margin-top:14px;font-family:inherit;letter-spacing:.3px}
+.game-log-btn:hover{color:var(--text)}
+.game-log{width:100%;border-collapse:collapse;font-size:11px;margin-top:10px}
+.game-log th{text-align:left;padding:4px 8px;font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--gM);font-weight:700;border-bottom:1px solid var(--gL)}
+.game-log td{padding:5px 8px;border-bottom:1px solid var(--bg);color:var(--soft)}
+.game-log tr:last-child td{border-bottom:none}
+.game-log tbody tr:hover td{background:var(--bg)}
+.gl-win{color:#1A7A3A;font-weight:700}
+.gl-loss{color:#C0392B;font-weight:700}
+.gl-ivy{font-size:8px;text-transform:uppercase;letter-spacing:.6px;color:var(--cr);font-weight:700;margin-left:4px;opacity:.7}
+.yoy-rank{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--gM);margin-top:10px;padding-top:8px;border-top:1px solid var(--gL);text-align:center}
+#comp-select{font-style:italic}
+#comp-select option{font-style:normal}
+.m-comp{margin-top:5px;padding-top:4px;border-top:1px dashed var(--gL)}
+.m-comp-v{font-size:12px;font-weight:700;color:rgba(37,99,235,0.85)}
+.m-comp-n{font-size:8px;color:var(--gM);margin-left:3px}
+.ts-headline{width:100%;font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gM);font-weight:700;margin-bottom:6px}
+.game-log{min-width:max-content;border-collapse:collapse;font-size:10px}
+.glm-label{font-size:8.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;color:var(--gM);padding:3px 12px 3px 0;white-space:nowrap;position:sticky;left:0;background:var(--white);z-index:1}
+.glm-game{min-width:38px;padding:3px 4px;text-align:center;font-size:8.5px;font-weight:700;white-space:nowrap;border-bottom:2px solid transparent}
+.glm-game.glm-w{color:#1A7A3A;border-bottom-color:rgba(26,122,56,0.35)}
+.glm-game.glm-l{color:#C0392B;border-bottom-color:rgba(192,57,43,0.3)}
+.game-log td{padding:3px 4px;text-align:center;border-bottom:1px solid var(--bg);color:var(--soft);min-width:38px}
+.game-log tbody tr:hover td,.game-log tbody tr:hover .glm-label{background:var(--bg)}
+.glm-exc{color:#1A7A3A;font-weight:700}
+.glm-solid{color:rgba(37,99,235,0.8);font-weight:600}
+.glm-neg{color:#C0392B}
+.glm-conf-dot{color:var(--cr);font-size:7px;margin-left:2px}
+#game-log-wrap{overflow-x:auto}
+.arc-comp-table{width:auto;border-collapse:collapse;font-size:11px;margin-top:10px}
+.arc-comp-table th{padding:5px 12px;font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--gM);font-weight:700;border-bottom:1px solid var(--gL);text-align:center}
+.arc-comp-table td{padding:4px 12px;border-bottom:1px solid var(--bg);color:var(--soft);text-align:center;font-size:11px;font-weight:700}
+.arc-cmp-gn{width:28px;text-align:center!important;color:var(--gM)!important;font-weight:400!important;font-size:10px!important}
+.arc-cmp-opp{text-align:left!important;font-weight:400!important;color:var(--soft)!important;white-space:nowrap;padding-right:16px!important}
+.arc-cmp-miss{color:var(--gL)!important;font-weight:400!important}
+#arc-comp-inner{max-height:280px;overflow-y:auto}
+.arc-comp-table tbody tr:hover td{background:var(--bg)}
+.arc-meta-comp{font-size:12px;font-weight:700;color:rgba(37,99,235,0.85);margin-top:4px;line-height:1}
+.arc-meta-comp span{font-size:8.5px;color:var(--gM);font-weight:400;margin-left:3px}
+</style>
+</head>
+<body>
+
+<div id="pg1">
+  <div class="site-hdr">
+    <div class="hdr-bar"></div>
+    <div class="hdr-text">
+      <h1>Harvard Crimson Men's Basketball</h1>
+      <p>Player Analytics · 2025–26</p>
+    </div>
+  </div>
+  <div class="welcome-panel">
+    <p>A closer look at the <strong>2025–26 Harvard Crimson Men's Basketball</strong> season — one player at a time. Select any card below to explore his stats, see where he stands among his teammates, trace how his performance evolved game by game, and track how he grew from last year.</p>
+    <p>Stats sourced from <a href="https://www.sports-reference.com/cbb/" target="_blank" rel="noopener">Sports Reference CBB</a>. Faded cards average fewer than 15 minutes per game.</p>
+  </div>
+  <div class="team-summary" id="team-summary"></div>
+  <div class="roster-grid" id="roster-grid"></div>
+</div>
+
+<div id="pg2">
+  <div class="player-hdr">
+    <button id="back-btn">← Roster</button>
+    <div class="player-hdr-info">
+      <div class="player-hdr-name" id="phdr-name"></div>
+      <div class="player-hdr-sub" id="phdr-sub"></div>
+    </div>
+    <button class="share-btn" id="share-btn">Share ↗</button>
+  </div>
+
+  <div class="player-selectors">
+    <div class="sel-group">
+      <span class="sel-lbl">Viewing</span>
+      <div class="sel-wrap"><select id="player-select"></select></div>
+    </div>
+    <div class="sel-sep">·</div>
+    <div class="sel-group">
+      <span class="sel-lbl">Compare with</span>
+      <div class="sel-wrap"><select id="comp-select"></select></div>
+    </div>
+  </div>
+  <div class="panels">
+
+    <div class="panel" id="panel-snap">
+      <div class="panel-title">2025–26 Season Snapshot</div>
+      <div class="panel-sub">Everything that matters this season, organized across five facets of his game. Tap any number to see how he ranks among his teammates.</div>
+      <div class="buckets" id="buckets"></div>
+    </div>
+
+    <div class="panel" id="panel-comp">
+      <div class="panel-title">Roster Comparison</div>
+      <div id="comp-instructions">
+        <div class="comp-placeholder">
+          <p>Select any stat in the Season Snapshot above to compare this player against his teammates.</p>
+          <span class="comp-hint">Bar charts rank each player by a single stat &nbsp;·&nbsp; Scatter plots show two stats at once — hover any dot for details</span>
+        </div>
+      </div>
+      <div id="comp-chart-area" style="display:none">
+        <div class="chart-title" id="chart-title"></div>
+        <div class="chart-note" id="chart-note"></div>
+        <div class="chart-guide" id="chart-guide"></div>
+        <div class="chart-wrap"><canvas id="comp-chart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-arc">
+      <div class="panel-title">Season Arc</div>
+      <div class="panel-sub" id="arc-sub"></div>
+      <div class="arc-meta" id="arc-meta"></div>
+      <div class="arc-legend">
+        <div class="arc-legend-grp"><span class="arc-legend-grp-lbl">Result</span><span class="arc-legend-item"><span class="arc-legend-dot win"></span>Win</span><span class="arc-legend-item"><span class="arc-legend-dot loss"></span>Loss</span></div>
+        <div class="arc-legend-sep"></div>
+        <div class="arc-legend-grp"><span class="arc-legend-grp-lbl">Conference</span><span class="arc-legend-item" style="color:var(--cr);font-weight:600">● Ivy League</span><span class="arc-legend-item" style="opacity:0.5">● Non-Conf / Tournament</span></div>
+      </div>
+      <div class="arc-wrap"><canvas id="arc-chart"></canvas></div>
+      <button class="game-log-btn" id="game-log-btn">Show game log ▾</button>
+      <div id="game-log-wrap" style="display:none"><table class="game-log" id="game-log"></table></div>
+      <button class="game-log-btn" id="arc-comp-btn" style="display:none"></button>
+      <div id="arc-comp-wrap" style="display:none"></div>
+    </div>
+
+    <div class="panel" id="panel-yoy">
+      <div class="panel-title">Year over Year · 2024–25 → 2025–26</div>
+      <div class="panel-sub">Season-over-season change for the 11 players with data for both years — the five first-year Crimson don't have a prior season to compare against. <span style="color:#1A7A3A;font-weight:700">Green</span> = improved &nbsp;·&nbsp; <span style="color:#C0392B;font-weight:700">Red</span> = declined or unchanged. For Usage Rate, the change reflects role expectations rather than a simple judgment call.</div>
+      <div id="yoy-content"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+
+const PLAYERS = [{"info":{"name":"Robert Hinton","number":"4","class":"SO","pos":"G","height":"6-5","weight":"190","hometown":"Los Angeles, CA","hs":"Harvard-Westlake School (CA)","photo":"Pictures_improved/Hinton.webp"},"s26":{"G":29,"MP":33.5,"PTS":16.8,"TS":0.564,"USG":27.6,"AST":2.1,"TOV":1.8,"AST_TOV":1.17,"TRB":4.8,"ORB":0.9,"DRB":3.9,"STL":1.4,"BLK":0.2,"PF":2.0,"BPM":0.9,"OBPM":0.6,"DBPM":0.3},"s25":{"G":27,"MP":30.3,"PTS":14.6,"TS":0.549,"USG":25.8,"AST":1.8,"TOV":1.4,"AST_TOV":1.29,"TRB":4.1,"ORB":1.0,"DRB":3.1,"STL":1.3,"BLK":0.0,"PF":1.5,"BPM":-0.8,"OBPM":0.3,"DBPM":-1.2},"games":[{"g":1,"opp":"MIT","date":"2025-11-07","conf":false,"loc":"H","win":true,"pts":9,"ast":1.0,"trb":4.0,"stl":1.0,"blk":0.0,"tov":0.0,"sc":6.3},{"g":2,"opp":"New Hampshire","date":"2025-11-09","conf":false,"loc":"H","win":true,"pts":22,"ast":2.0,"trb":4.0,"stl":1.0,"blk":0.0,"tov":1.0,"sc":16.2},{"g":3,"opp":"Northeastern","date":"2025-11-11","conf":false,"loc":"H","win":false,"pts":6,"ast":1.0,"trb":1.0,"stl":1.0,"blk":0.0,"tov":3.0,"sc":-0.9},{"g":4,"opp":"Army","date":"2025-11-15","conf":false,"loc":"A","win":true,"pts":16,"ast":3.0,"trb":6.0,"stl":2.0,"blk":0.0,"tov":0.0,"sc":15.4},{"g":5,"opp":"Marist","date":"2025-11-16","conf":false,"loc":"A","win":true,"pts":13,"ast":1.0,"trb":7.0,"stl":2.0,"blk":1.0,"tov":5.0,"sc":6.4},{"g":6,"opp":"Penn State","date":"2025-11-19","conf":false,"loc":"A","win":false,"pts":2,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":-4.8},{"g":7,"opp":"Boston University","date":"2025-11-22","conf":false,"loc":"N","win":false,"pts":34,"ast":3.0,"trb":4.0,"stl":2.0,"blk":0.0,"tov":1.0,"sc":31.2},{"g":8,"opp":"Boston College","date":"2025-11-26","conf":false,"loc":"A","win":false,"pts":12,"ast":2.0,"trb":9.0,"stl":3.0,"blk":0.0,"tov":1.0,"sc":10.7},{"g":9,"opp":"Bryant","date":"2025-11-29","conf":false,"loc":"H","win":true,"pts":11,"ast":2.0,"trb":8.0,"stl":1.0,"blk":0.0,"tov":2.0,"sc":7.4},{"g":10,"opp":"Massachusetts","date":"2025-12-03","conf":false,"loc":"A","win":false,"pts":35,"ast":2.0,"trb":8.0,"stl":2.0,"blk":0.0,"tov":2.0,"sc":27.8},{"g":11,"opp":"Furman","date":"2025-12-06","conf":false,"loc":"A","win":false,"pts":26,"ast":5.0,"trb":5.0,"stl":3.0,"blk":0.0,"tov":0.0,"sc":23.7},{"g":12,"opp":"Holy Cross","date":"2025-12-20","conf":false,"loc":"H","win":true,"pts":16,"ast":1.0,"trb":7.0,"stl":1.0,"blk":0.0,"tov":2.0,"sc":13.1},{"g":13,"opp":"St. John's (NY)","date":"2025-12-23","conf":false,"loc":"A","win":false,"pts":12,"ast":1.0,"trb":3.0,"stl":2.0,"blk":1.0,"tov":3.0,"sc":7.2},{"g":14,"opp":"Colgate","date":"2025-12-28","conf":false,"loc":"A","win":true,"pts":9,"ast":2.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":2.0,"sc":2.5},{"g":15,"opp":"Dartmouth","date":"2026-01-05","conf":true,"loc":"H","win":false,"pts":16,"ast":3.0,"trb":7.0,"stl":0.0,"blk":0.0,"tov":3.0,"sc":9.4},{"g":16,"opp":"Columbia","date":"2026-01-10","conf":true,"loc":"A","win":true,"pts":17,"ast":3.0,"trb":4.0,"stl":2.0,"blk":1.0,"tov":2.0,"sc":14.6},{"g":17,"opp":"Princeton","date":"2026-01-17","conf":true,"loc":"H","win":true,"pts":27,"ast":3.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":18.6},{"g":18,"opp":"Pennsylvania","date":"2026-01-19","conf":true,"loc":"H","win":true,"pts":11,"ast":4.0,"trb":5.0,"stl":3.0,"blk":0.0,"tov":2.0,"sc":8.4},{"g":19,"opp":"Cornell","date":"2026-01-24","conf":true,"loc":"H","win":false,"pts":19,"ast":1.0,"trb":6.0,"stl":1.0,"blk":0.0,"tov":1.0,"sc":14.3},{"g":20,"opp":"Brown","date":"2026-01-30","conf":true,"loc":"A","win":true,"pts":22,"ast":4.0,"trb":4.0,"stl":2.0,"blk":0.0,"tov":5.0,"sc":17.4},{"g":21,"opp":"Yale","date":"2026-01-31","conf":true,"loc":"A","win":true,"pts":26,"ast":3.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":21.1},{"g":22,"opp":"Dartmouth","date":"2026-02-07","conf":true,"loc":"A","win":true,"pts":19,"ast":3.0,"trb":9.0,"stl":0.0,"blk":1.0,"tov":3.0,"sc":13.7},{"g":23,"opp":"Brown","date":"2026-02-13","conf":true,"loc":"H","win":true,"pts":20,"ast":1.0,"trb":3.0,"stl":3.0,"blk":0.0,"tov":4.0,"sc":13.0},{"g":24,"opp":"Yale","date":"2026-02-14","conf":true,"loc":"H","win":false,"pts":12,"ast":2.0,"trb":7.0,"stl":1.0,"blk":0.0,"tov":1.0,"sc":8.4},{"g":25,"opp":"Cornell","date":"2026-02-21","conf":true,"loc":"A","win":true,"pts":16,"ast":1.0,"trb":3.0,"stl":3.0,"blk":0.0,"tov":1.0,"sc":12.9},{"g":26,"opp":"Princeton","date":"2026-02-27","conf":true,"loc":"A","win":true,"pts":15,"ast":1.0,"trb":3.0,"stl":2.0,"blk":0.0,"tov":1.0,"sc":8.2},{"g":27,"opp":"Pennsylvania","date":"2026-02-28","conf":true,"loc":"A","win":false,"pts":20,"ast":0.0,"trb":5.0,"stl":1.0,"blk":1.0,"tov":3.0,"sc":11.9},{"g":28,"opp":"Columbia","date":"2026-03-06","conf":true,"loc":"H","win":true,"pts":17,"ast":4.0,"trb":4.0,"stl":1.0,"blk":0.0,"tov":2.0,"sc":13.9},{"g":29,"opp":"Pennsylvania","date":"2026-03-14","conf":false,"loc":"N","win":false,"pts":6,"ast":3.0,"trb":8.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":3.0}]},{"info":{"name":"Tey Barbour","number":"8","class":"SO","pos":"G","height":"6-4","weight":"190","hometown":"Manassas, VA","hs":"Patriot (VA)","photo":"Pictures_improved/Barbour.webp"},"s26":{"G":29,"MP":33.6,"PTS":13.6,"TS":0.641,"USG":19.6,"AST":1.4,"TOV":1.3,"AST_TOV":1.08,"TRB":5.2,"ORB":0.7,"DRB":4.5,"STL":0.7,"BLK":0.3,"PF":1.9,"BPM":1.6,"OBPM":2.1,"DBPM":-0.4},"s25":{"G":27,"MP":15.8,"PTS":4.8,"TS":0.554,"USG":16.3,"AST":0.6,"TOV":0.5,"AST_TOV":1.2,"TRB":1.8,"ORB":0.2,"DRB":1.6,"STL":0.4,"BLK":0.0,"PF":1.6,"BPM":-4.1,"OBPM":-2.4,"DBPM":-1.7},"games":[{"g":1,"opp":"MIT","date":"2025-11-07","conf":false,"loc":"H","win":true,"pts":12,"ast":0.0,"trb":6.0,"stl":0.0,"blk":0.0,"tov":2.0,"sc":7.3},{"g":2,"opp":"New Hampshire","date":"2025-11-09","conf":false,"loc":"H","win":true,"pts":14,"ast":1.0,"trb":6.0,"stl":0.0,"blk":0.0,"tov":2.0,"sc":9.4},{"g":3,"opp":"Northeastern","date":"2025-11-11","conf":false,"loc":"H","win":false,"pts":12,"ast":0.0,"trb":5.0,"stl":0.0,"blk":2.0,"tov":2.0,"sc":7.8},{"g":4,"opp":"Army","date":"2025-11-15","conf":false,"loc":"A","win":true,"pts":9,"ast":4.0,"trb":3.0,"stl":2.0,"blk":0.0,"tov":0.0,"sc":10.5},{"g":5,"opp":"Marist","date":"2025-11-16","conf":false,"loc":"A","win":true,"pts":10,"ast":1.0,"trb":7.0,"stl":1.0,"blk":0.0,"tov":1.0,"sc":9.2},{"g":6,"opp":"Penn State","date":"2025-11-19","conf":false,"loc":"A","win":false,"pts":12,"ast":1.0,"trb":7.0,"stl":1.0,"blk":1.0,"tov":3.0,"sc":8.0},{"g":7,"opp":"Boston University","date":"2025-11-22","conf":false,"loc":"N","win":false,"pts":15,"ast":1.0,"trb":3.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":9.8},{"g":8,"opp":"Boston College","date":"2025-11-26","conf":false,"loc":"A","win":false,"pts":15,"ast":1.0,"trb":9.0,"stl":1.0,"blk":0.0,"tov":2.0,"sc":12.7},{"g":9,"opp":"Bryant","date":"2025-11-29","conf":false,"loc":"H","win":true,"pts":10,"ast":3.0,"trb":7.0,"stl":1.0,"blk":0.0,"tov":1.0,"sc":8.4},{"g":10,"opp":"Massachusetts","date":"2025-12-03","conf":false,"loc":"A","win":false,"pts":7,"ast":1.0,"trb":4.0,"stl":1.0,"blk":0.0,"tov":2.0,"sc":0.8},{"g":11,"opp":"Furman","date":"2025-12-06","conf":false,"loc":"A","win":false,"pts":9,"ast":2.0,"trb":4.0,"stl":1.0,"blk":0.0,"tov":0.0,"sc":6.4},{"g":12,"opp":"Holy Cross","date":"2025-12-20","conf":false,"loc":"H","win":true,"pts":18,"ast":2.0,"trb":8.0,"stl":0.0,"blk":0.0,"tov":2.0,"sc":17.6},{"g":13,"opp":"St. John's (NY)","date":"2025-12-23","conf":false,"loc":"A","win":false,"pts":6,"ast":1.0,"trb":3.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":3.2},{"g":14,"opp":"Colgate","date":"2025-12-28","conf":false,"loc":"A","win":true,"pts":18,"ast":1.0,"trb":4.0,"stl":0.0,"blk":1.0,"tov":0.0,"sc":15.6},{"g":15,"opp":"Dartmouth","date":"2026-01-05","conf":true,"loc":"H","win":false,"pts":10,"ast":0.0,"trb":4.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":1.9},{"g":16,"opp":"Columbia","date":"2026-01-10","conf":true,"loc":"A","win":true,"pts":9,"ast":1.0,"trb":6.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":6.7},{"g":17,"opp":"Princeton","date":"2026-01-17","conf":true,"loc":"H","win":true,"pts":13,"ast":2.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":11.5},{"g":18,"opp":"Pennsylvania","date":"2026-01-19","conf":true,"loc":"H","win":true,"pts":17,"ast":0.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":10.1},{"g":19,"opp":"Cornell","date":"2026-01-24","conf":true,"loc":"H","win":false,"pts":18,"ast":3.0,"trb":5.0,"stl":1.0,"blk":2.0,"tov":0.0,"sc":16.3},{"g":20,"opp":"Brown","date":"2026-01-30","conf":true,"loc":"A","win":true,"pts":20,"ast":0.0,"trb":7.0,"stl":1.0,"blk":0.0,"tov":1.0,"sc":18.8},{"g":21,"opp":"Yale","date":"2026-01-31","conf":true,"loc":"A","win":true,"pts":9,"ast":3.0,"trb":8.0,"stl":1.0,"blk":0.0,"tov":2.0,"sc":8.2},{"g":22,"opp":"Dartmouth","date":"2026-02-07","conf":true,"loc":"A","win":true,"pts":18,"ast":2.0,"trb":6.0,"stl":1.0,"blk":1.0,"tov":2.0,"sc":15.1},{"g":23,"opp":"Brown","date":"2026-02-13","conf":true,"loc":"H","win":true,"pts":17,"ast":0.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":11.6},{"g":24,"opp":"Yale","date":"2026-02-14","conf":true,"loc":"H","win":false,"pts":12,"ast":3.0,"trb":5.0,"stl":2.0,"blk":0.0,"tov":0.0,"sc":10.4},{"g":25,"opp":"Cornell","date":"2026-02-21","conf":true,"loc":"A","win":true,"pts":30,"ast":3.0,"trb":6.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":26.0},{"g":26,"opp":"Princeton","date":"2026-02-27","conf":true,"loc":"A","win":true,"pts":14,"ast":0.0,"trb":5.0,"stl":1.0,"blk":0.0,"tov":2.0,"sc":7.8},{"g":27,"opp":"Pennsylvania","date":"2026-02-28","conf":true,"loc":"A","win":false,"pts":9,"ast":1.0,"trb":4.0,"stl":1.0,"blk":0.0,"tov":2.0,"sc":5.0},{"g":28,"opp":"Columbia","date":"2026-03-06","conf":true,"loc":"H","win":true,"pts":14,"ast":4.0,"trb":10.0,"stl":2.0,"blk":0.0,"tov":2.0,"sc":13.7},{"g":29,"opp":"Pennsylvania","date":"2026-03-14","conf":false,"loc":"N","win":false,"pts":16,"ast":1.0,"trb":4.0,"stl":1.0,"blk":2.0,"tov":3.0,"sc":9.5}]},{"info":{"name":"Chandler Piggé","number":"13","class":"SR","pos":"G","height":"6-5","weight":"210","hometown":"Houston, TX","hs":"Baumholder American (Germany); Phillips Exeter (NH)","photo":"Pictures_improved/Pigge.webp"},"s26":{"G":29,"MP":33.6,"PTS":12.9,"TS":0.538,"USG":23.2,"AST":3.3,"TOV":2.0,"AST_TOV":1.65,"TRB":5.1,"ORB":1.4,"DRB":3.7,"STL":1.7,"BLK":0.3,"PF":1.7,"BPM":0.9,"OBPM":0.0,"DBPM":1.0},"s25":{"G":27,"MP":33.4,"PTS":13.1,"TS":0.544,"USG":22.9,"AST":2.6,"TOV":2.3,"AST_TOV":1.13,"TRB":6.7,"ORB":1.9,"DRB":4.9,"STL":1.7,"BLK":0.4,"PF":2.0,"BPM":0.5,"OBPM":0.3,"DBPM":0.2},"games":[{"g":1,"opp":"MIT","date":"2025-11-07","conf":false,"loc":"H","win":true,"pts":13,"ast":5.0,"trb":5.0,"stl":3.0,"blk":0.0,"tov":1.0,"sc":12.9},{"g":2,"opp":"New Hampshire","date":"2025-11-09","conf":false,"loc":"H","win":true,"pts":23,"ast":6.0,"trb":2.0,"stl":3.0,"blk":0.0,"tov":0.0,"sc":24.7},{"g":3,"opp":"Northeastern","date":"2025-11-11","conf":false,"loc":"H","win":false,"pts":15,"ast":2.0,"trb":2.0,"stl":2.0,"blk":1.0,"tov":4.0,"sc":9.5},{"g":4,"opp":"Army","date":"2025-11-15","conf":false,"loc":"A","win":true,"pts":14,"ast":4.0,"trb":5.0,"stl":2.0,"blk":0.0,"tov":2.0,"sc":15.5},{"g":5,"opp":"Marist","date":"2025-11-16","conf":false,"loc":"A","win":true,"pts":14,"ast":1.0,"trb":7.0,"stl":0.0,"blk":0.0,"tov":2.0,"sc":5.6},{"g":6,"opp":"Penn State","date":"2025-11-19","conf":false,"loc":"A","win":false,"pts":21,"ast":9.0,"trb":5.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":24.3},{"g":7,"opp":"Boston University","date":"2025-11-22","conf":false,"loc":"N","win":false,"pts":5,"ast":2.0,"trb":1.0,"stl":2.0,"blk":0.0,"tov":2.0,"sc":1.1},{"g":8,"opp":"Boston College","date":"2025-11-26","conf":false,"loc":"A","win":false,"pts":12,"ast":3.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":5.5},{"g":9,"opp":"Bryant","date":"2025-11-29","conf":false,"loc":"H","win":true,"pts":15,"ast":5.0,"trb":5.0,"stl":2.0,"blk":1.0,"tov":1.0,"sc":16.1},{"g":10,"opp":"Massachusetts","date":"2025-12-03","conf":false,"loc":"A","win":false,"pts":9,"ast":1.0,"trb":1.0,"stl":2.0,"blk":0.0,"tov":3.0,"sc":-0.7},{"g":11,"opp":"Furman","date":"2025-12-06","conf":false,"loc":"A","win":false,"pts":8,"ast":3.0,"trb":3.0,"stl":2.0,"blk":0.0,"tov":2.0,"sc":4.1},{"g":12,"opp":"Holy Cross","date":"2025-12-20","conf":false,"loc":"H","win":true,"pts":16,"ast":3.0,"trb":7.0,"stl":1.0,"blk":2.0,"tov":4.0,"sc":13.0},{"g":13,"opp":"St. John's (NY)","date":"2025-12-23","conf":false,"loc":"A","win":false,"pts":13,"ast":2.0,"trb":2.0,"stl":1.0,"blk":0.0,"tov":0.0,"sc":10.2},{"g":14,"opp":"Colgate","date":"2025-12-28","conf":false,"loc":"A","win":true,"pts":18,"ast":3.0,"trb":4.0,"stl":2.0,"blk":0.0,"tov":4.0,"sc":12.0},{"g":15,"opp":"Dartmouth","date":"2026-01-05","conf":true,"loc":"H","win":false,"pts":14,"ast":1.0,"trb":4.0,"stl":2.0,"blk":0.0,"tov":1.0,"sc":7.3},{"g":16,"opp":"Columbia","date":"2026-01-10","conf":true,"loc":"A","win":true,"pts":11,"ast":2.0,"trb":7.0,"stl":3.0,"blk":1.0,"tov":4.0,"sc":10.3},{"g":17,"opp":"Princeton","date":"2026-01-17","conf":true,"loc":"H","win":true,"pts":21,"ast":5.0,"trb":11.0,"stl":4.0,"blk":1.0,"tov":1.0,"sc":25.6},{"g":18,"opp":"Pennsylvania","date":"2026-01-19","conf":true,"loc":"H","win":true,"pts":9,"ast":2.0,"trb":5.0,"stl":0.0,"blk":0.0,"tov":4.0,"sc":5.0},{"g":19,"opp":"Cornell","date":"2026-01-24","conf":true,"loc":"H","win":false,"pts":4,"ast":2.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":1.3},{"g":20,"opp":"Brown","date":"2026-01-30","conf":true,"loc":"A","win":true,"pts":16,"ast":1.0,"trb":3.0,"stl":1.0,"blk":1.0,"tov":2.0,"sc":10.5},{"g":21,"opp":"Yale","date":"2026-01-31","conf":true,"loc":"A","win":true,"pts":12,"ast":2.0,"trb":4.0,"stl":1.0,"blk":0.0,"tov":1.0,"sc":12.3},{"g":22,"opp":"Dartmouth","date":"2026-02-07","conf":true,"loc":"A","win":true,"pts":13,"ast":3.0,"trb":7.0,"stl":2.0,"blk":0.0,"tov":0.0,"sc":13.1},{"g":23,"opp":"Brown","date":"2026-02-13","conf":true,"loc":"H","win":true,"pts":7,"ast":2.0,"trb":10.0,"stl":3.0,"blk":0.0,"tov":3.0,"sc":7.1},{"g":24,"opp":"Yale","date":"2026-02-14","conf":true,"loc":"H","win":false,"pts":13,"ast":3.0,"trb":6.0,"stl":3.0,"blk":0.0,"tov":2.0,"sc":11.8},{"g":25,"opp":"Cornell","date":"2026-02-21","conf":true,"loc":"A","win":true,"pts":7,"ast":8.0,"trb":9.0,"stl":1.0,"blk":0.0,"tov":2.0,"sc":10.9},{"g":26,"opp":"Princeton","date":"2026-02-27","conf":true,"loc":"A","win":true,"pts":8,"ast":3.0,"trb":9.0,"stl":4.0,"blk":0.0,"tov":4.0,"sc":7.9},{"g":27,"opp":"Pennsylvania","date":"2026-02-28","conf":true,"loc":"A","win":false,"pts":9,"ast":4.0,"trb":7.0,"stl":1.0,"blk":0.0,"tov":4.0,"sc":3.5},{"g":28,"opp":"Columbia","date":"2026-03-06","conf":true,"loc":"H","win":true,"pts":26,"ast":3.0,"trb":7.0,"stl":2.0,"blk":1.0,"tov":1.0,"sc":26.7},{"g":29,"opp":"Pennsylvania","date":"2026-03-14","conf":false,"loc":"N","win":false,"pts":9,"ast":6.0,"trb":6.0,"stl":0.0,"blk":0.0,"tov":4.0,"sc":4.5}]},{"info":{"name":"Thomas Batties","number":"15","class":"JR","pos":"F","height":"6-7","weight":"215","hometown":"Washington, DC","hs":"Gonzaga (DC)","photo":"Pictures_improved/Batties.webp"},"s26":{"G":29,"MP":33.1,"PTS":12.3,"TS":0.602,"USG":19.8,"AST":2.3,"TOV":1.6,"AST_TOV":1.44,"TRB":5.4,"ORB":1.6,"DRB":3.8,"STL":0.7,"BLK":1.5,"PF":2.1,"BPM":2.2,"OBPM":1.5,"DBPM":0.6},"s25":{"G":27,"MP":32.7,"PTS":11.0,"TS":0.539,"USG":19.1,"AST":1.7,"TOV":1.5,"AST_TOV":1.13,"TRB":5.0,"ORB":1.3,"DRB":3.7,"STL":0.9,"BLK":1.6,"PF":2.5,"BPM":-1.7,"OBPM":-1.5,"DBPM":-0.2},"games":[{"g":1,"opp":"MIT","date":"2025-11-07","conf":false,"loc":"H","win":true,"pts":17,"ast":2.0,"trb":4.0,"stl":2.0,"blk":0.0,"tov":1.0,"sc":17.0},{"g":2,"opp":"New Hampshire","date":"2025-11-09","conf":false,"loc":"H","win":true,"pts":12,"ast":1.0,"trb":5.0,"stl":1.0,"blk":2.0,"tov":3.0,"sc":8.2},{"g":3,"opp":"Northeastern","date":"2025-11-11","conf":false,"loc":"H","win":false,"pts":3,"ast":3.0,"trb":4.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":3.4},{"g":4,"opp":"Army","date":"2025-11-15","conf":false,"loc":"A","win":true,"pts":17,"ast":1.0,"trb":5.0,"stl":0.0,"blk":3.0,"tov":2.0,"sc":17.1},{"g":5,"opp":"Marist","date":"2025-11-16","conf":false,"loc":"A","win":true,"pts":5,"ast":4.0,"trb":2.0,"stl":0.0,"blk":1.0,"tov":0.0,"sc":6.3},{"g":6,"opp":"Penn State","date":"2025-11-19","conf":false,"loc":"A","win":false,"pts":17,"ast":6.0,"trb":3.0,"stl":0.0,"blk":1.0,"tov":3.0,"sc":14.2},{"g":7,"opp":"Boston University","date":"2025-11-22","conf":false,"loc":"N","win":false,"pts":14,"ast":6.0,"trb":2.0,"stl":1.0,"blk":0.0,"tov":2.0,"sc":12.7},{"g":8,"opp":"Boston College","date":"2025-11-26","conf":false,"loc":"A","win":false,"pts":13,"ast":0.0,"trb":2.0,"stl":0.0,"blk":1.0,"tov":1.0,"sc":9.2},{"g":9,"opp":"Bryant","date":"2025-11-29","conf":false,"loc":"H","win":true,"pts":12,"ast":1.0,"trb":9.0,"stl":0.0,"blk":1.0,"tov":2.0,"sc":10.3},{"g":10,"opp":"Massachusetts","date":"2025-12-03","conf":false,"loc":"A","win":false,"pts":13,"ast":4.0,"trb":4.0,"stl":2.0,"blk":1.0,"tov":0.0,"sc":15.0},{"g":11,"opp":"Furman","date":"2025-12-06","conf":false,"loc":"A","win":false,"pts":2,"ast":0.0,"trb":2.0,"stl":2.0,"blk":0.0,"tov":3.0,"sc":-2.2},{"g":12,"opp":"Holy Cross","date":"2025-12-20","conf":false,"loc":"H","win":true,"pts":2,"ast":2.0,"trb":1.0,"stl":0.0,"blk":3.0,"tov":1.0,"sc":-0.4},{"g":13,"opp":"St. John's (NY)","date":"2025-12-23","conf":false,"loc":"A","win":false,"pts":7,"ast":0.0,"trb":3.0,"stl":1.0,"blk":0.0,"tov":2.0,"sc":0.6},{"g":14,"opp":"Colgate","date":"2025-12-28","conf":false,"loc":"A","win":true,"pts":22,"ast":1.0,"trb":7.0,"stl":3.0,"blk":1.0,"tov":1.0,"sc":20.9},{"g":15,"opp":"Dartmouth","date":"2026-01-05","conf":true,"loc":"H","win":false,"pts":8,"ast":5.0,"trb":8.0,"stl":3.0,"blk":1.0,"tov":0.0,"sc":14.6},{"g":16,"opp":"Columbia","date":"2026-01-10","conf":true,"loc":"A","win":true,"pts":24,"ast":4.0,"trb":5.0,"stl":1.0,"blk":1.0,"tov":0.0,"sc":24.4},{"g":17,"opp":"Princeton","date":"2026-01-17","conf":true,"loc":"H","win":true,"pts":18,"ast":2.0,"trb":9.0,"stl":0.0,"blk":2.0,"tov":1.0,"sc":14.7},{"g":18,"opp":"Pennsylvania","date":"2026-01-19","conf":true,"loc":"H","win":true,"pts":17,"ast":2.0,"trb":6.0,"stl":2.0,"blk":3.0,"tov":1.0,"sc":15.2},{"g":19,"opp":"Cornell","date":"2026-01-24","conf":true,"loc":"H","win":false,"pts":14,"ast":4.0,"trb":6.0,"stl":0.0,"blk":1.0,"tov":3.0,"sc":10.8},{"g":20,"opp":"Brown","date":"2026-01-30","conf":true,"loc":"A","win":true,"pts":4,"ast":0.0,"trb":6.0,"stl":0.0,"blk":3.0,"tov":2.0,"sc":2.3},{"g":21,"opp":"Yale","date":"2026-01-31","conf":true,"loc":"A","win":true,"pts":10,"ast":3.0,"trb":5.0,"stl":1.0,"blk":3.0,"tov":1.0,"sc":7.8},{"g":22,"opp":"Dartmouth","date":"2026-02-07","conf":true,"loc":"A","win":true,"pts":14,"ast":4.0,"trb":5.0,"stl":0.0,"blk":2.0,"tov":3.0,"sc":12.3},{"g":23,"opp":"Brown","date":"2026-02-13","conf":true,"loc":"H","win":true,"pts":8,"ast":2.0,"trb":6.0,"stl":0.0,"blk":2.0,"tov":1.0,"sc":3.3},{"g":24,"opp":"Yale","date":"2026-02-14","conf":true,"loc":"H","win":false,"pts":23,"ast":1.0,"trb":7.0,"stl":0.0,"blk":4.0,"tov":2.0,"sc":20.1},{"g":25,"opp":"Cornell","date":"2026-02-21","conf":true,"loc":"A","win":true,"pts":10,"ast":7.0,"trb":9.0,"stl":0.0,"blk":0.0,"tov":2.0,"sc":9.9},{"g":26,"opp":"Princeton","date":"2026-02-27","conf":true,"loc":"A","win":true,"pts":10,"ast":0.0,"trb":4.0,"stl":0.0,"blk":1.0,"tov":0.0,"sc":8.6},{"g":27,"opp":"Pennsylvania","date":"2026-02-28","conf":true,"loc":"A","win":false,"pts":19,"ast":1.0,"trb":8.0,"stl":0.0,"blk":2.0,"tov":1.0,"sc":17.6},{"g":28,"opp":"Columbia","date":"2026-03-06","conf":true,"loc":"H","win":true,"pts":14,"ast":1.0,"trb":8.0,"stl":1.0,"blk":3.0,"tov":2.0,"sc":11.4},{"g":29,"opp":"Pennsylvania","date":"2026-03-14","conf":false,"loc":"N","win":false,"pts":8,"ast":0.0,"trb":11.0,"stl":0.0,"blk":2.0,"tov":5.0,"sc":3.4}]},{"info":{"name":"Austin Hunt","number":"7","class":"SO","pos":"G","height":"6-4","weight":"185","hometown":"Marlborough, MA","hs":"Milton Academy (MA)","photo":"Pictures_improved/Hunt.webp"},"s26":{"G":14,"MP":22.7,"PTS":6.9,"TS":0.605,"USG":16.8,"AST":1.0,"TOV":1.1,"AST_TOV":0.91,"TRB":3.6,"ORB":0.8,"DRB":2.8,"STL":0.9,"BLK":0.3,"PF":1.9,"BPM":-1.6,"OBPM":-1.6,"DBPM":0.1},"s25":{"G":19,"MP":21.6,"PTS":7.8,"TS":0.597,"USG":18.9,"AST":1.8,"TOV":1.1,"AST_TOV":1.64,"TRB":3.6,"ORB":0.8,"DRB":2.8,"STL":0.7,"BLK":0.1,"PF":1.9,"BPM":-0.2,"OBPM":-0.1,"DBPM":-0.2},"games":[{"g":1,"opp":"MIT","date":"2025-11-07","conf":false,"loc":"H","win":true,"pts":8,"ast":0.0,"trb":4.0,"stl":2.0,"blk":0.0,"tov":1.0,"sc":7.7},{"g":2,"opp":"New Hampshire","date":"2025-11-09","conf":false,"loc":"H","win":true,"pts":13,"ast":3.0,"trb":6.0,"stl":2.0,"blk":0.0,"tov":2.0,"sc":12.9},{"g":3,"opp":"Northeastern","date":"2025-11-11","conf":false,"loc":"H","win":false,"pts":0,"ast":0.0,"trb":3.0,"stl":1.0,"blk":0.0,"tov":3.0,"sc":-4.0},{"g":8,"opp":"Boston College","date":"2025-11-26","conf":false,"loc":"A","win":false,"pts":4,"ast":0.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":0.1},{"g":9,"opp":"Bryant","date":"2025-11-29","conf":false,"loc":"H","win":true,"pts":4,"ast":2.0,"trb":4.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":2.7},{"g":10,"opp":"Massachusetts","date":"2025-12-03","conf":false,"loc":"A","win":false,"pts":2,"ast":1.0,"trb":2.0,"stl":1.0,"blk":0.0,"tov":1.0,"sc":0.5},{"g":11,"opp":"Furman","date":"2025-12-06","conf":false,"loc":"A","win":false,"pts":10,"ast":0.0,"trb":1.0,"stl":1.0,"blk":0.0,"tov":1.0,"sc":7.2},{"g":12,"opp":"Holy Cross","date":"2025-12-20","conf":false,"loc":"H","win":true,"pts":19,"ast":0.0,"trb":5.0,"stl":0.0,"blk":1.0,"tov":0.0,"sc":17.3},{"g":13,"opp":"St. John's (NY)","date":"2025-12-23","conf":false,"loc":"A","win":false,"pts":5,"ast":2.0,"trb":1.0,"stl":1.0,"blk":0.0,"tov":1.0,"sc":4.0},{"g":14,"opp":"Colgate","date":"2025-12-28","conf":false,"loc":"A","win":true,"pts":8,"ast":2.0,"trb":6.0,"stl":2.0,"blk":0.0,"tov":1.0,"sc":8.3},{"g":15,"opp":"Dartmouth","date":"2026-01-05","conf":true,"loc":"H","win":false,"pts":16,"ast":1.0,"trb":2.0,"stl":1.0,"blk":0.0,"tov":2.0,"sc":10.5},{"g":16,"opp":"Columbia","date":"2026-01-10","conf":true,"loc":"A","win":true,"pts":0,"ast":1.0,"trb":5.0,"stl":1.0,"blk":1.0,"tov":2.0,"sc":0.9},{"g":17,"opp":"Princeton","date":"2026-01-17","conf":true,"loc":"H","win":true,"pts":4,"ast":2.0,"trb":7.0,"stl":0.0,"blk":2.0,"tov":0.0,"sc":5.6},{"g":29,"opp":"Pennsylvania","date":"2026-03-14","conf":false,"loc":"N","win":false,"pts":4,"ast":0.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":2.4}]},{"info":{"name":"Ben Eisendrath","number":"5","class":"SO","pos":"G","height":"6-2","weight":"175","hometown":"Los Angeles, CA","hs":"Oakwood (CA); South Kent School (CT)","photo":"Pictures_improved/Eisendrath.webp"},"s26":{"G":28,"MP":29.1,"PTS":5.3,"TS":0.515,"USG":14.0,"AST":3.3,"TOV":2.2,"AST_TOV":1.5,"TRB":2.2,"ORB":0.5,"DRB":1.7,"STL":1.6,"BLK":0.5,"PF":2.2,"BPM":-2.8,"OBPM":-4.8,"DBPM":2.0},"s25":{"G":26,"MP":9.5,"PTS":1.2,"TS":0.44,"USG":11.8,"AST":1.1,"TOV":0.7,"AST_TOV":1.57,"TRB":0.9,"ORB":0.0,"DRB":0.8,"STL":0.5,"BLK":0.2,"PF":0.8,"BPM":-4.2,"OBPM":-5.7,"DBPM":1.5},"games":[{"g":2,"opp":"New Hampshire","date":"2025-11-09","conf":false,"loc":"H","win":true,"pts":0,"ast":1.0,"trb":0.0,"stl":1.0,"blk":0.0,"tov":1.0,"sc":0.0},{"g":3,"opp":"Northeastern","date":"2025-11-11","conf":false,"loc":"H","win":false,"pts":8,"ast":3.0,"trb":2.0,"stl":1.0,"blk":0.0,"tov":2.0,"sc":7.4},{"g":4,"opp":"Army","date":"2025-11-15","conf":false,"loc":"A","win":true,"pts":6,"ast":2.0,"trb":1.0,"stl":4.0,"blk":0.0,"tov":4.0,"sc":5.5},{"g":5,"opp":"Marist","date":"2025-11-16","conf":false,"loc":"A","win":true,"pts":6,"ast":2.0,"trb":3.0,"stl":2.0,"blk":0.0,"tov":3.0,"sc":4.6},{"g":6,"opp":"Penn State","date":"2025-11-19","conf":false,"loc":"A","win":false,"pts":15,"ast":2.0,"trb":1.0,"stl":1.0,"blk":1.0,"tov":3.0,"sc":11.7},{"g":7,"opp":"Boston University","date":"2025-11-22","conf":false,"loc":"N","win":false,"pts":2,"ast":9.0,"trb":3.0,"stl":3.0,"blk":0.0,"tov":3.0,"sc":7.8},{"g":8,"opp":"Boston College","date":"2025-11-26","conf":false,"loc":"A","win":false,"pts":0,"ast":4.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":3.0,"sc":-1.7},{"g":9,"opp":"Bryant","date":"2025-11-29","conf":false,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":2.0,"blk":1.0,"tov":2.0,"sc":-0.8},{"g":10,"opp":"Massachusetts","date":"2025-12-03","conf":false,"loc":"A","win":false,"pts":4,"ast":3.0,"trb":7.0,"stl":3.0,"blk":0.0,"tov":3.0,"sc":6.3},{"g":11,"opp":"Furman","date":"2025-12-06","conf":false,"loc":"A","win":false,"pts":10,"ast":3.0,"trb":1.0,"stl":1.0,"blk":1.0,"tov":1.0,"sc":7.7},{"g":12,"opp":"Holy Cross","date":"2025-12-20","conf":false,"loc":"H","win":true,"pts":6,"ast":4.0,"trb":1.0,"stl":1.0,"blk":1.0,"tov":2.0,"sc":6.3},{"g":13,"opp":"St. John's (NY)","date":"2025-12-23","conf":false,"loc":"A","win":false,"pts":4,"ast":3.0,"trb":1.0,"stl":0.0,"blk":2.0,"tov":2.0,"sc":2.7},{"g":14,"opp":"Colgate","date":"2025-12-28","conf":false,"loc":"A","win":true,"pts":0,"ast":3.0,"trb":0.0,"stl":0.0,"blk":1.0,"tov":2.0,"sc":-1.4},{"g":15,"opp":"Dartmouth","date":"2026-01-05","conf":true,"loc":"H","win":false,"pts":4,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":0.8},{"g":16,"opp":"Columbia","date":"2026-01-10","conf":true,"loc":"A","win":true,"pts":13,"ast":5.0,"trb":1.0,"stl":5.0,"blk":0.0,"tov":0.0,"sc":17.1},{"g":17,"opp":"Princeton","date":"2026-01-17","conf":true,"loc":"H","win":true,"pts":4,"ast":2.0,"trb":3.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":-0.8},{"g":18,"opp":"Pennsylvania","date":"2026-01-19","conf":true,"loc":"H","win":true,"pts":1,"ast":3.0,"trb":2.0,"stl":1.0,"blk":0.0,"tov":3.0,"sc":0.1},{"g":19,"opp":"Cornell","date":"2026-01-24","conf":true,"loc":"H","win":false,"pts":11,"ast":6.0,"trb":2.0,"stl":4.0,"blk":0.0,"tov":1.0,"sc":13.3},{"g":20,"opp":"Brown","date":"2026-01-30","conf":true,"loc":"A","win":true,"pts":5,"ast":0.0,"trb":1.0,"stl":1.0,"blk":0.0,"tov":3.0,"sc":0.8},{"g":21,"opp":"Yale","date":"2026-01-31","conf":true,"loc":"A","win":true,"pts":0,"ast":2.0,"trb":2.0,"stl":0.0,"blk":2.0,"tov":3.0,"sc":-1.4},{"g":22,"opp":"Dartmouth","date":"2026-02-07","conf":true,"loc":"A","win":true,"pts":4,"ast":5.0,"trb":3.0,"stl":2.0,"blk":0.0,"tov":1.0,"sc":6.9},{"g":23,"opp":"Brown","date":"2026-02-13","conf":true,"loc":"H","win":true,"pts":0,"ast":5.0,"trb":2.0,"stl":4.0,"blk":0.0,"tov":4.0,"sc":0.5},{"g":24,"opp":"Yale","date":"2026-02-14","conf":true,"loc":"H","win":false,"pts":13,"ast":2.0,"trb":3.0,"stl":3.0,"blk":2.0,"tov":1.0,"sc":15.3},{"g":25,"opp":"Cornell","date":"2026-02-21","conf":true,"loc":"A","win":true,"pts":0,"ast":3.0,"trb":2.0,"stl":1.0,"blk":2.0,"tov":0.0,"sc":1.4},{"g":26,"opp":"Princeton","date":"2026-02-27","conf":true,"loc":"A","win":true,"pts":11,"ast":4.0,"trb":2.0,"stl":1.0,"blk":0.0,"tov":2.0,"sc":6.6},{"g":27,"opp":"Pennsylvania","date":"2026-02-28","conf":true,"loc":"A","win":false,"pts":2,"ast":3.0,"trb":5.0,"stl":2.0,"blk":0.0,"tov":4.0,"sc":-0.4},{"g":28,"opp":"Columbia","date":"2026-03-06","conf":true,"loc":"H","win":true,"pts":5,"ast":6.0,"trb":4.0,"stl":0.0,"blk":2.0,"tov":3.0,"sc":7.1},{"g":29,"opp":"Pennsylvania","date":"2026-03-14","conf":false,"loc":"N","win":false,"pts":15,"ast":6.0,"trb":6.0,"stl":1.0,"blk":0.0,"tov":3.0,"sc":13.7}]},{"info":{"name":"Kenan Parrish","number":"0","class":"SO","pos":"F","height":"7-0","weight":"260","hometown":"Pittsboro, NC","hs":"Northwood (NC); Northfield Mount Hermon (MA)","photo":"Pictures_improved/Parrish.webp"},"s26":{"G":18,"MP":6.2,"PTS":2.2,"TS":0.484,"USG":23.4,"AST":0.1,"TOV":0.4,"AST_TOV":0.25,"TRB":1.2,"ORB":0.2,"DRB":0.9,"STL":0.2,"BLK":0.2,"PF":0.7,"BPM":-8.7,"OBPM":-7.5,"DBPM":-1.2},"s25":null,"games":[{"g":1,"opp":"MIT","date":"2025-11-07","conf":false,"loc":"H","win":true,"pts":9,"ast":1.0,"trb":5.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":8.5},{"g":2,"opp":"New Hampshire","date":"2025-11-09","conf":false,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":3.0,"stl":1.0,"blk":1.0,"tov":0.0,"sc":1.4},{"g":3,"opp":"Northeastern","date":"2025-11-11","conf":false,"loc":"H","win":false,"pts":0,"ast":1.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.7},{"g":4,"opp":"Army","date":"2025-11-15","conf":false,"loc":"A","win":true,"pts":4,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":1.7},{"g":5,"opp":"Marist","date":"2025-11-16","conf":false,"loc":"A","win":true,"pts":4,"ast":0.0,"trb":3.0,"stl":1.0,"blk":0.0,"tov":1.0,"sc":3.2},{"g":6,"opp":"Penn State","date":"2025-11-19","conf":false,"loc":"A","win":false,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-2.2},{"g":7,"opp":"Boston University","date":"2025-11-22","conf":false,"loc":"N","win":false,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":1.0,"tov":1.0,"sc":-0.7},{"g":8,"opp":"Boston College","date":"2025-11-26","conf":false,"loc":"A","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":9,"opp":"Bryant","date":"2025-11-29","conf":false,"loc":"H","win":true,"pts":4,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":1.6},{"g":10,"opp":"Massachusetts","date":"2025-12-03","conf":false,"loc":"A","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":-1.0},{"g":11,"opp":"Furman","date":"2025-12-06","conf":false,"loc":"A","win":false,"pts":4,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":3.1},{"g":13,"opp":"St. John's (NY)","date":"2025-12-23","conf":false,"loc":"A","win":false,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-1.1},{"g":20,"opp":"Brown","date":"2026-01-30","conf":true,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":21,"opp":"Yale","date":"2026-01-31","conf":true,"loc":"A","win":true,"pts":10,"ast":0.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":5.4},{"g":22,"opp":"Dartmouth","date":"2026-02-07","conf":true,"loc":"A","win":true,"pts":1,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.5},{"g":23,"opp":"Brown","date":"2026-02-13","conf":true,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":1.0,"tov":0.0,"sc":-0.1},{"g":24,"opp":"Yale","date":"2026-02-14","conf":true,"loc":"H","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":1.0,"blk":0.0,"tov":1.0,"sc":-2.2},{"g":28,"opp":"Columbia","date":"2026-03-06","conf":true,"loc":"H","win":true,"pts":3,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":3.4}]},{"info":{"name":"Frankie Mannino","number":"10","class":"FR","pos":"G","height":"6-5","weight":"205","hometown":"Leesburg, VA","hs":"Landon School (MD)","photo":"Pictures_improved/Mannino.webp"},"s26":{"G":28,"MP":8.8,"PTS":1.8,"TS":0.599,"USG":11.6,"AST":0.5,"TOV":0.3,"AST_TOV":1.67,"TRB":1.3,"ORB":0.6,"DRB":0.7,"STL":0.4,"BLK":0.1,"PF":0.9,"BPM":-0.2,"OBPM":-2.4,"DBPM":2.2},"s25":null,"games":[{"g":1,"opp":"MIT","date":"2025-11-07","conf":false,"loc":"H","win":true,"pts":2,"ast":0.0,"trb":4.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":2.6},{"g":2,"opp":"New Hampshire","date":"2025-11-09","conf":false,"loc":"H","win":true,"pts":0,"ast":1.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.7},{"g":3,"opp":"Northeastern","date":"2025-11-11","conf":false,"loc":"H","win":false,"pts":1,"ast":0.0,"trb":5.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":0.4},{"g":4,"opp":"Army","date":"2025-11-15","conf":false,"loc":"A","win":true,"pts":3,"ast":0.0,"trb":3.0,"stl":1.0,"blk":0.0,"tov":0.0,"sc":1.4},{"g":5,"opp":"Marist","date":"2025-11-16","conf":false,"loc":"A","win":true,"pts":2,"ast":0.0,"trb":2.0,"stl":1.0,"blk":0.0,"tov":2.0,"sc":1.7},{"g":6,"opp":"Penn State","date":"2025-11-19","conf":false,"loc":"A","win":false,"pts":2,"ast":3.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":3.7},{"g":7,"opp":"Boston University","date":"2025-11-22","conf":false,"loc":"N","win":false,"pts":4,"ast":0.0,"trb":2.0,"stl":1.0,"blk":0.0,"tov":0.0,"sc":5.4},{"g":8,"opp":"Boston College","date":"2025-11-26","conf":false,"loc":"A","win":false,"pts":2,"ast":0.0,"trb":1.0,"stl":1.0,"blk":0.0,"tov":0.0,"sc":3.0},{"g":9,"opp":"Bryant","date":"2025-11-29","conf":false,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":1.0,"blk":0.0,"tov":1.0,"sc":0.0},{"g":10,"opp":"Massachusetts","date":"2025-12-03","conf":false,"loc":"A","win":false,"pts":1,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.1},{"g":11,"opp":"Furman","date":"2025-12-06","conf":false,"loc":"A","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.4},{"g":12,"opp":"Holy Cross","date":"2025-12-20","conf":false,"loc":"H","win":true,"pts":0,"ast":2.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":1.3},{"g":13,"opp":"St. John's (NY)","date":"2025-12-23","conf":false,"loc":"A","win":false,"pts":4,"ast":1.0,"trb":0.0,"stl":1.0,"blk":1.0,"tov":1.0,"sc":3.9},{"g":14,"opp":"Colgate","date":"2025-12-28","conf":false,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.3},{"g":15,"opp":"Dartmouth","date":"2026-01-05","conf":true,"loc":"H","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.4},{"g":16,"opp":"Columbia","date":"2026-01-10","conf":true,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.7},{"g":18,"opp":"Pennsylvania","date":"2026-01-19","conf":true,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":19,"opp":"Cornell","date":"2026-01-24","conf":true,"loc":"H","win":false,"pts":11,"ast":0.0,"trb":3.0,"stl":1.0,"blk":1.0,"tov":1.0,"sc":11.5},{"g":20,"opp":"Brown","date":"2026-01-30","conf":true,"loc":"A","win":true,"pts":2,"ast":2.0,"trb":0.0,"stl":2.0,"blk":0.0,"tov":0.0,"sc":4.7},{"g":21,"opp":"Yale","date":"2026-01-31","conf":true,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.5},{"g":22,"opp":"Dartmouth","date":"2026-02-07","conf":true,"loc":"A","win":true,"pts":2,"ast":1.0,"trb":3.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":2.2},{"g":23,"opp":"Brown","date":"2026-02-13","conf":true,"loc":"H","win":true,"pts":4,"ast":0.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":3.3},{"g":24,"opp":"Yale","date":"2026-02-14","conf":true,"loc":"H","win":false,"pts":2,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":1.0},{"g":25,"opp":"Cornell","date":"2026-02-21","conf":true,"loc":"A","win":true,"pts":7,"ast":0.0,"trb":0.0,"stl":0.0,"blk":1.0,"tov":0.0,"sc":3.0},{"g":26,"opp":"Princeton","date":"2026-02-27","conf":true,"loc":"A","win":true,"pts":0,"ast":2.0,"trb":2.0,"stl":1.0,"blk":0.0,"tov":0.0,"sc":2.6},{"g":27,"opp":"Pennsylvania","date":"2026-02-28","conf":true,"loc":"A","win":false,"pts":2,"ast":2.0,"trb":2.0,"stl":2.0,"blk":0.0,"tov":2.0,"sc":3.0},{"g":28,"opp":"Columbia","date":"2026-03-06","conf":true,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.1},{"g":29,"opp":"Pennsylvania","date":"2026-03-14","conf":false,"loc":"N","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.8}]},{"info":{"name":"Ryan Sullivan","number":"34","class":"FR","pos":"F","height":"6-9","weight":"205","hometown":"Auburn, MA","hs":"Worcester Academy (MA)","photo":"Pictures_improved/Sullivan.webp"},"s26":{"G":21,"MP":7.4,"PTS":1.3,"TS":0.545,"USG":10.2,"AST":0.2,"TOV":0.2,"AST_TOV":1.0,"TRB":2.0,"ORB":0.7,"DRB":1.3,"STL":0.2,"BLK":0.6,"PF":0.8,"BPM":0.9,"OBPM":-1.9,"DBPM":2.8},"s25":null,"games":[{"g":1,"opp":"MIT","date":"2025-11-07","conf":false,"loc":"H","win":true,"pts":5,"ast":0.0,"trb":4.0,"stl":0.0,"blk":1.0,"tov":1.0,"sc":2.8},{"g":2,"opp":"New Hampshire","date":"2025-11-09","conf":false,"loc":"H","win":true,"pts":2,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":1.7},{"g":3,"opp":"Northeastern","date":"2025-11-11","conf":false,"loc":"H","win":false,"pts":1,"ast":1.0,"trb":7.0,"stl":0.0,"blk":3.0,"tov":1.0,"sc":3.8},{"g":4,"opp":"Army","date":"2025-11-15","conf":false,"loc":"A","win":true,"pts":1,"ast":0.0,"trb":3.0,"stl":1.0,"blk":0.0,"tov":0.0,"sc":1.4},{"g":6,"opp":"Penn State","date":"2025-11-19","conf":false,"loc":"A","win":false,"pts":6,"ast":0.0,"trb":2.0,"stl":1.0,"blk":0.0,"tov":1.0,"sc":5.7},{"g":7,"opp":"Boston University","date":"2025-11-22","conf":false,"loc":"N","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.4},{"g":8,"opp":"Boston College","date":"2025-11-26","conf":false,"loc":"A","win":false,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.3},{"g":9,"opp":"Bryant","date":"2025-11-29","conf":false,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.6},{"g":10,"opp":"Massachusetts","date":"2025-12-03","conf":false,"loc":"A","win":false,"pts":0,"ast":1.0,"trb":3.0,"stl":0.0,"blk":2.0,"tov":0.0,"sc":3.4},{"g":11,"opp":"Furman","date":"2025-12-06","conf":false,"loc":"A","win":false,"pts":0,"ast":0.0,"trb":3.0,"stl":0.0,"blk":1.0,"tov":0.0,"sc":-0.3},{"g":12,"opp":"Holy Cross","date":"2025-12-20","conf":false,"loc":"H","win":true,"pts":2,"ast":1.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":3.1},{"g":13,"opp":"St. John's (NY)","date":"2025-12-23","conf":false,"loc":"A","win":false,"pts":2,"ast":0.0,"trb":1.0,"stl":0.0,"blk":2.0,"tov":0.0,"sc":3.0},{"g":14,"opp":"Colgate","date":"2025-12-28","conf":false,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":16,"opp":"Columbia","date":"2026-01-10","conf":true,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.3},{"g":17,"opp":"Princeton","date":"2026-01-17","conf":true,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.4},{"g":18,"opp":"Pennsylvania","date":"2026-01-19","conf":true,"loc":"H","win":true,"pts":6,"ast":1.0,"trb":4.0,"stl":1.0,"blk":1.0,"tov":0.0,"sc":7.9},{"g":19,"opp":"Cornell","date":"2026-01-24","conf":true,"loc":"H","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":20,"opp":"Brown","date":"2026-01-30","conf":true,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":3.0,"stl":0.0,"blk":1.0,"tov":1.0,"sc":-0.2},{"g":22,"opp":"Dartmouth","date":"2026-02-07","conf":true,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":25,"opp":"Cornell","date":"2026-02-21","conf":true,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.3},{"g":29,"opp":"Pennsylvania","date":"2026-03-14","conf":false,"loc":"N","win":false,"pts":2,"ast":0.0,"trb":3.0,"stl":1.0,"blk":2.0,"tov":0.0,"sc":5.4}]},{"info":{"name":"Luca Ace-Nasteski","number":"35","class":"JR","pos":"F","height":"6-10","weight":"225","hometown":"Manly, Australia","hs":"The Scots College (Australia); IMG Academy (FL)","photo":"Pictures_improved/Ace-Nasteski.webp"},"s26":{"G":20,"MP":5.4,"PTS":1.2,"TS":0.542,"USG":12.5,"AST":0.3,"TOV":0.2,"AST_TOV":1.5,"TRB":1.0,"ORB":0.3,"DRB":0.7,"STL":0.1,"BLK":0.1,"PF":0.7,"BPM":-3.8,"OBPM":-4.0,"DBPM":0.2},"s25":{"G":5,"MP":16.2,"PTS":3.6,"TS":0.602,"USG":13.1,"AST":0.8,"TOV":1.0,"AST_TOV":0.8,"TRB":2.6,"ORB":0.6,"DRB":2.0,"STL":0.2,"BLK":0.4,"PF":2.8,"BPM":-7.4,"OBPM":-6.4,"DBPM":-1.0},"games":[{"g":1,"opp":"MIT","date":"2025-11-07","conf":false,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.1},{"g":3,"opp":"Northeastern","date":"2025-11-11","conf":false,"loc":"H","win":false,"pts":7,"ast":0.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":3.6},{"g":4,"opp":"Army","date":"2025-11-15","conf":false,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.1},{"g":5,"opp":"Marist","date":"2025-11-16","conf":false,"loc":"A","win":true,"pts":2,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.9},{"g":6,"opp":"Penn State","date":"2025-11-19","conf":false,"loc":"A","win":false,"pts":2,"ast":0.0,"trb":1.0,"stl":1.0,"blk":0.0,"tov":0.0,"sc":1.6},{"g":8,"opp":"Boston College","date":"2025-11-26","conf":false,"loc":"A","win":false,"pts":0,"ast":0.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.1},{"g":10,"opp":"Massachusetts","date":"2025-12-03","conf":false,"loc":"A","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":12,"opp":"Holy Cross","date":"2025-12-20","conf":false,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.7},{"g":13,"opp":"St. John's (NY)","date":"2025-12-23","conf":false,"loc":"A","win":false,"pts":6,"ast":1.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":5.4},{"g":15,"opp":"Dartmouth","date":"2026-01-05","conf":true,"loc":"H","win":false,"pts":0,"ast":1.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":1.7},{"g":16,"opp":"Columbia","date":"2026-01-10","conf":true,"loc":"A","win":true,"pts":2,"ast":2.0,"trb":1.0,"stl":1.0,"blk":0.0,"tov":0.0,"sc":4.0},{"g":17,"opp":"Princeton","date":"2026-01-17","conf":true,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":18,"opp":"Pennsylvania","date":"2026-01-19","conf":true,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.1},{"g":19,"opp":"Cornell","date":"2026-01-24","conf":true,"loc":"H","win":false,"pts":2,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":0.3},{"g":20,"opp":"Brown","date":"2026-01-30","conf":true,"loc":"A","win":true,"pts":0,"ast":1.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":1.0},{"g":22,"opp":"Dartmouth","date":"2026-02-07","conf":true,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":25,"opp":"Cornell","date":"2026-02-21","conf":true,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.7},{"g":26,"opp":"Princeton","date":"2026-02-27","conf":true,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":2.0,"stl":0.0,"blk":1.0,"tov":0.0,"sc":1.0},{"g":27,"opp":"Pennsylvania","date":"2026-02-28","conf":true,"loc":"A","win":false,"pts":0,"ast":0.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.9},{"g":28,"opp":"Columbia","date":"2026-03-06","conf":true,"loc":"H","win":true,"pts":2,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.9}]},{"info":{"name":"Dutch Dowdell","number":"12","class":"SO","pos":"G","height":"6-6","weight":"195","hometown":"Holladay, UT","hs":"Olympus (UT)","photo":"Pictures_improved/Dowdell.webp"},"s26":{"G":16,"MP":3.8,"PTS":0.9,"TS":0.441,"USG":16.7,"AST":0.1,"TOV":0.1,"AST_TOV":1.0,"TRB":0.4,"ORB":0.0,"DRB":0.4,"STL":0.1,"BLK":0.0,"PF":0.1,"BPM":-4.8,"OBPM":-4.0,"DBPM":-0.8},"s25":{"G":16,"MP":7.4,"PTS":2.3,"TS":0.464,"USG":21.0,"AST":0.2,"TOV":0.4,"AST_TOV":0.5,"TRB":0.6,"ORB":0.3,"DRB":0.3,"STL":0.3,"BLK":0.0,"PF":0.7,"BPM":-8.2,"OBPM":-5.5,"DBPM":-2.7},"games":[{"g":1,"opp":"MIT","date":"2025-11-07","conf":false,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.7},{"g":3,"opp":"Northeastern","date":"2025-11-11","conf":false,"loc":"H","win":false,"pts":3,"ast":0.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":3.3},{"g":4,"opp":"Army","date":"2025-11-15","conf":false,"loc":"A","win":true,"pts":3,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":1.7},{"g":7,"opp":"Boston University","date":"2025-11-22","conf":false,"loc":"N","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.7},{"g":8,"opp":"Boston College","date":"2025-11-26","conf":false,"loc":"A","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.7},{"g":12,"opp":"Holy Cross","date":"2025-12-20","conf":false,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.3},{"g":13,"opp":"St. John's (NY)","date":"2025-12-23","conf":false,"loc":"A","win":false,"pts":0,"ast":0.0,"trb":1.0,"stl":1.0,"blk":0.0,"tov":0.0,"sc":0.6},{"g":16,"opp":"Columbia","date":"2026-01-10","conf":true,"loc":"A","win":true,"pts":3,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":2.3},{"g":17,"opp":"Princeton","date":"2026-01-17","conf":true,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":18,"opp":"Pennsylvania","date":"2026-01-19","conf":true,"loc":"H","win":true,"pts":3,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.9},{"g":19,"opp":"Cornell","date":"2026-01-24","conf":true,"loc":"H","win":false,"pts":0,"ast":1.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-1.8},{"g":22,"opp":"Dartmouth","date":"2026-02-07","conf":true,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":25,"opp":"Cornell","date":"2026-02-21","conf":true,"loc":"A","win":true,"pts":3,"ast":0.0,"trb":0.0,"stl":1.0,"blk":0.0,"tov":0.0,"sc":2.6},{"g":26,"opp":"Princeton","date":"2026-02-27","conf":true,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":28,"opp":"Columbia","date":"2026-03-06","conf":true,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":29,"opp":"Pennsylvania","date":"2026-03-14","conf":false,"loc":"N","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0}]},{"info":{"name":"Greg Cooper","number":"14","class":"SR","pos":"G","height":"6-0","weight":"160","hometown":"Cambridge, MA","hs":"Boston College High School (MA)","photo":"Pictures_improved/Cooper.webp"},"s26":{"G":4,"MP":2.5,"PTS":0.8,"TS":0.75,"USG":11.1,"AST":0.0,"TOV":0.0,"AST_TOV":0.0,"TRB":0.3,"ORB":0.0,"DRB":0.3,"STL":0.0,"BLK":0.0,"PF":0.3,"BPM":-14.7,"OBPM":-11.2,"DBPM":-3.5},"s25":{"G":4,"MP":1.3,"PTS":0.0,"TS":0.0,"USG":10.7,"AST":0.0,"TOV":0.0,"AST_TOV":0.0,"TRB":0.0,"ORB":0.0,"DRB":0.0,"STL":0.0,"BLK":0.0,"PF":0.0,"BPM":-16.3,"OBPM":-10.7,"DBPM":-5.6},"games":[{"g":1,"opp":"MIT","date":"2025-11-07","conf":false,"loc":"H","win":true,"pts":3,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":2.3},{"g":4,"opp":"Army","date":"2025-11-15","conf":false,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.3},{"g":12,"opp":"Holy Cross","date":"2025-12-20","conf":false,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":28,"opp":"Columbia","date":"2026-03-06","conf":true,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.7}]},{"info":{"name":"Xavier Nesbitt","number":"3","class":"JR","pos":"G","height":"5-11","weight":"170","hometown":"Chicago, IL","hs":"Chicago University (IL)","photo":"Pictures_improved/Nesbitt.webp"},"s26":{"G":28,"MP":5.1,"PTS":0.6,"TS":0.275,"USG":14.8,"AST":0.3,"TOV":0.3,"AST_TOV":1.0,"TRB":0.6,"ORB":0.1,"DRB":0.5,"STL":0.0,"BLK":0.0,"PF":0.5,"BPM":-11.9,"OBPM":-9.3,"DBPM":-2.6},"s25":{"G":17,"MP":6.8,"PTS":1.1,"TS":0.353,"USG":14.3,"AST":0.3,"TOV":0.2,"AST_TOV":1.5,"TRB":0.6,"ORB":0.1,"DRB":0.5,"STL":0.1,"BLK":0.0,"PF":0.5,"BPM":-9.3,"OBPM":-7.1,"DBPM":-2.2},"games":[{"g":1,"opp":"MIT","date":"2025-11-07","conf":false,"loc":"H","win":true,"pts":1,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.6},{"g":2,"opp":"New Hampshire","date":"2025-11-09","conf":false,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":3,"opp":"Northeastern","date":"2025-11-11","conf":false,"loc":"H","win":false,"pts":4,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":1.9},{"g":4,"opp":"Army","date":"2025-11-15","conf":false,"loc":"A","win":true,"pts":2,"ast":2.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":2.0},{"g":5,"opp":"Marist","date":"2025-11-16","conf":false,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.7},{"g":6,"opp":"Penn State","date":"2025-11-19","conf":false,"loc":"A","win":false,"pts":3,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":1.6},{"g":7,"opp":"Boston University","date":"2025-11-22","conf":false,"loc":"N","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-2.1},{"g":8,"opp":"Boston College","date":"2025-11-26","conf":false,"loc":"A","win":false,"pts":2,"ast":1.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.9},{"g":9,"opp":"Bryant","date":"2025-11-29","conf":false,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.4},{"g":10,"opp":"Massachusetts","date":"2025-12-03","conf":false,"loc":"A","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":12,"opp":"Holy Cross","date":"2025-12-20","conf":false,"loc":"H","win":true,"pts":2,"ast":0.0,"trb":3.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":2.6},{"g":13,"opp":"St. John's (NY)","date":"2025-12-23","conf":false,"loc":"A","win":false,"pts":0,"ast":0.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":-0.8},{"g":14,"opp":"Colgate","date":"2025-12-28","conf":false,"loc":"A","win":true,"pts":3,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":1.6},{"g":15,"opp":"Dartmouth","date":"2026-01-05","conf":true,"loc":"H","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":16,"opp":"Columbia","date":"2026-01-10","conf":true,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":-2.1},{"g":17,"opp":"Princeton","date":"2026-01-17","conf":true,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.7},{"g":18,"opp":"Pennsylvania","date":"2026-01-19","conf":true,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":2.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.5},{"g":19,"opp":"Cornell","date":"2026-01-24","conf":true,"loc":"H","win":false,"pts":0,"ast":2.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":1.0},{"g":20,"opp":"Brown","date":"2026-01-30","conf":true,"loc":"A","win":true,"pts":0,"ast":1.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.7},{"g":21,"opp":"Yale","date":"2026-01-31","conf":true,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":22,"opp":"Dartmouth","date":"2026-02-07","conf":true,"loc":"A","win":true,"pts":0,"ast":1.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":23,"opp":"Brown","date":"2026-02-13","conf":true,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-1.1},{"g":24,"opp":"Yale","date":"2026-02-14","conf":true,"loc":"H","win":false,"pts":0,"ast":1.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.7},{"g":25,"opp":"Cornell","date":"2026-02-21","conf":true,"loc":"A","win":true,"pts":0,"ast":1.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-1.1},{"g":26,"opp":"Princeton","date":"2026-02-27","conf":true,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.7},{"g":27,"opp":"Pennsylvania","date":"2026-02-28","conf":true,"loc":"A","win":false,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":2.0,"sc":-3.2},{"g":28,"opp":"Columbia","date":"2026-03-06","conf":true,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":-1.0},{"g":29,"opp":"Pennsylvania","date":"2026-03-14","conf":false,"loc":"N","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.7}]},{"info":{"name":"Avner Dror","number":"41","class":"FR","pos":"F","height":"6-9","weight":"225","hometown":"Kfar-Hess, Israel","hs":null,"photo":"Pictures_improved/Dror.webp"},"s26":{"G":2,"MP":2.0,"PTS":0.0,"TS":0.0,"USG":13.9,"AST":0.0,"TOV":0.0,"AST_TOV":0.0,"TRB":0.5,"ORB":0.5,"DRB":0.0,"STL":0.0,"BLK":0.0,"PF":0.5,"BPM":-35.2,"OBPM":-10.8,"DBPM":-24.4},"s25":null,"games":[{"g":1,"opp":"MIT","date":"2025-11-07","conf":false,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.4},{"g":4,"opp":"Army","date":"2025-11-15","conf":false,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0}]},{"info":{"name":"Payton Pitts","number":"24","class":"JR","pos":"G","height":"6-2","weight":"180","hometown":"Chicago, IL","hs":"Francis W. Parker School (IL)","photo":"Pictures_improved/Pitts.webp"},"s26":{"G":3,"MP":2.0,"PTS":0.0,"TS":0.0,"USG":9.3,"AST":0.0,"TOV":0.0,"AST_TOV":0.0,"TRB":0.3,"ORB":0.0,"DRB":0.3,"STL":0.0,"BLK":0.0,"PF":0.0,"BPM":-26.9,"OBPM":-18.0,"DBPM":-8.9},"s25":{"G":4,"MP":1.3,"PTS":0.0,"TS":0,"USG":10.7,"AST":0.0,"TOV":0.3,"AST_TOV":0.0,"TRB":0.0,"ORB":0.0,"DRB":0.0,"STL":0.0,"BLK":0.0,"PF":0.0,"BPM":-21.2,"OBPM":-14.1,"DBPM":-7.1},"games":[{"g":1,"opp":"MIT","date":"2025-11-07","conf":false,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.3},{"g":4,"opp":"Army","date":"2025-11-15","conf":false,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.7},{"g":12,"opp":"Holy Cross","date":"2025-12-20","conf":false,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0}]},{"info":{"name":"Joseph Quartey","number":"18","class":"FR","pos":"G","height":"6-2","weight":"165","hometown":"Cape Coast, Ghana","hs":"Grand River Academy (OH)","photo":"Pictures_improved/Quartey.webp"},"s26":{"G":7,"MP":2.7,"PTS":0.0,"TS":0.0,"USG":17.5,"AST":0.1,"TOV":0.1,"AST_TOV":1.0,"TRB":0.1,"ORB":0.1,"DRB":0.0,"STL":0.1,"BLK":0.0,"PF":0.3,"BPM":-16.3,"OBPM":-14.7,"DBPM":-1.6},"s25":null,"games":[{"g":1,"opp":"MIT","date":"2025-11-07","conf":false,"loc":"H","win":true,"pts":0,"ast":1.0,"trb":1.0,"stl":0.0,"blk":0.0,"tov":1.0,"sc":-1.0},{"g":3,"opp":"Northeastern","date":"2025-11-11","conf":false,"loc":"H","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.4},{"g":4,"opp":"Army","date":"2025-11-15","conf":false,"loc":"A","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.7},{"g":12,"opp":"Holy Cross","date":"2025-12-20","conf":false,"loc":"H","win":true,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-0.7},{"g":13,"opp":"St. John's (NY)","date":"2025-12-23","conf":false,"loc":"A","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":0.0},{"g":19,"opp":"Cornell","date":"2026-01-24","conf":true,"loc":"H","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":1.0,"blk":0.0,"tov":0.0,"sc":1.0},{"g":27,"opp":"Pennsylvania","date":"2026-02-28","conf":true,"loc":"A","win":false,"pts":0,"ast":0.0,"trb":0.0,"stl":0.0,"blk":0.0,"tov":0.0,"sc":-1.1}]}];
+
+const TIPS = {
+  TS:{
+    short:'higher = more efficient shooter',
+    plain:'Higher means he gets more points out of each shot attempt — counts 3-pointers and free throws fairly. Above 55% is good.',
+    tech:'True Shooting % = PTS ÷ (2 × (FGA + 0.44 × FTA)). Weights 3-pointers and free throws to reflect their true scoring value. 55% is roughly average.'
+  },
+  USG:{
+    short:'% of team plays run through him',
+    plain:'Higher means more of the offense runs through him — more shots, more free throws, more ball-handling. Context: a starter typically has 20–25%.',
+    tech:'Usage Rate = share of team possessions used by this player while on the floor (field goal attempts + 0.44 × FTAs + turnovers), divided by team possessions.'
+  },
+  AST_TOV:{
+    short:'higher = smarter decisions',
+    plain:'Higher is better — means he creates more assists than he gives the ball away. Above 1.0 means more good plays than mistakes.',
+    tech:'Assist-to-Turnover Ratio = Assists ÷ Turnovers. A ratio of 1.0 means equal assists and turnovers; above 1.5 is considered strong.'
+  },
+  BPM:{
+    short:'positive = above average overall',
+    plain:'Combines his offensive and defensive contributions into a single number. Positive means he makes the team better than an average player would in his position; negative means below average on both ends combined.',
+    tech:'Box Plus-Minus (BPM) estimates a player\'s contribution per 100 possessions relative to a replacement-level player, derived from box score stats only (no tracking or on/off data).'
+  },
+  OBPM:{
+    short:'positive = helps team score',
+    plain:'Measures his offensive contribution. Positive means he helps the team score more than an average player would in his place; negative means below average offensively.',
+    tech:'Offensive component of Box Plus-Minus. Isolates scoring and playmaking impact per 100 possessions using box score stats.'
+  },
+  DBPM:{
+    short:'positive = helps team defend',
+    plain:'Measures his defensive contribution. Positive means he helps the team defend better than average; negative means below average on defense.',
+    tech:'Defensive component of Box Plus-Minus. Estimates defensive impact per 100 possessions using box score stats (steals, blocks, rebounds, fouls).'
+  },
+  GS:{
+    short:'10+ solid · 20+ excellent · negative = drag',
+    plain:'A single number for how good his overall game was. Above 10 is a solid performance. Above 20 is excellent. A negative score means his misses and turnovers outweighed his contributions that night.',
+    tech:'Game Score (John Hollinger / Sports Reference): PTS + 0.4×FG − 0.7×FGA − 0.4×(FTA−FT) + 0.7×ORB + 0.3×DRB + STL + 0.7×AST + 0.7×BLK − 0.4×PF − TOV'
+  },
+};
+
+const CHART_CFGS = {
+  pts:      {type:'rank', key:'PTS',     label:'Points per Game',            lowerBetter:false},
+  ast_tov:  {type:'rank', key:'AST_TOV', label:'Assist-to-Turnover Ratio',   lowerBetter:false},
+  trb:      {type:'rank', key:'TRB',     label:'Rebounds per Game',          lowerBetter:false},
+  stl:      {type:'rank', key:'STL',     label:'Steals per Game',            lowerBetter:false},
+  blk:      {type:'rank', key:'BLK',     label:'Blocks per Game',            lowerBetter:false},
+  pf:       {type:'rank', key:'PF',      label:'Personal Fouls per Game',    lowerBetter:true},
+  bpm:      {type:'rank', key:'BPM',     label:'Overall Impact (BPM)',       lowerBetter:false, fmt:'bpm'},
+  ts_usg:   {type:'scatter',
+             xKey:'USG', yKey:'TS',
+             xLabel:'Usage Rate (% of team plays)', yLabel:'Scoring Efficiency (True Shooting %)',
+             xFmt:v=>v.toFixed(1)+'%', yFmt:v=>(v*100).toFixed(1)+'%',
+             label:'Scoring Efficiency vs. Usage Rate',
+             guide:{type:'quadrant', xMid:20, yMid:0.55,
+                    note:'Each dot is a player. The lines mark 20% usage (starter-level) and 55% True Shooting (solid efficiency). Top-right is the target zone: high volume and high efficiency.',
+                    labels:{tr:'High-volume & efficient',tl:'Efficient, fewer shots',br:'High usage, lower efficiency',bl:'Limited role'}}},
+  ast_vs_tov:{type:'scatter',
+              xKey:'TOV', yKey:'AST',
+              xLabel:'Turnovers per Game', yLabel:'Assists per Game',
+              label:'Assists vs. Turnovers',
+              guide:{type:'diagonal',
+                     note:'Each dot is a player. The dashed line marks equal assists and turnovers. Players above the line create more good plays than mistakes — that\'s where you want to be.'}},
+  orb_drb:  {type:'scatter',
+             xKey:'ORB', yKey:'DRB',
+             xLabel:'Offensive Rebounds / Game', yLabel:'Defensive Rebounds / Game',
+             label:'Offensive vs. Defensive Rebounding',
+             guide:{type:'note',
+                    note:'Each dot is a player. Top-right means strong on the glass at both ends. Most players skew right (more defensive boards), since there are simply more defensive rebounding opportunities.'}},
+  obpm_dbpm:{type:'scatter',
+             xKey:'DBPM', yKey:'OBPM',
+             xLabel:'Defensive Impact (DBPM)', yLabel:'Offensive Impact (OBPM)',
+             xFmt:v=>(v>=0?'+':'')+v.toFixed(1), yFmt:v=>(v>=0?'+':'')+v.toFixed(1),
+             label:'Offensive vs. Defensive Impact (BPM)',
+             guide:{type:'quadrant_zero',
+                    note:'Each dot is a player. The center lines mark zero (average) on each axis. The dashed diagonal marks players with equal offensive and defensive contributions. Top-right = impacts both ends of the floor.',
+                    labels:{tr:'Two-way contributor',tl:'Offensive specialist',br:'Defensive specialist',bl:'Below avg. on both ends'}}},
+};
+
+let CUR = null;
+let COMP = null;
+let compChart = null;
+let arcChart = null;
+let activeChartKey = null;
+
+function fv(v, type) {
+  if (v === null || v === undefined || isNaN(v)) return '—';
+  if (type === 'pct') return (v*100).toFixed(1)+'%';
+  if (type === 'usg') return v.toFixed(1)+'%';
+  if (type === 'bpm') return (v>=0?'+':'')+v.toFixed(1);
+  if (type === 'ratio') return v.toFixed(2);
+  return v.toFixed(1);
+}
+
+function tipHtml(key, label) {
+  if (!TIPS[key]) return `<span>${label}</span>`;
+  const t = TIPS[key];
+  const plain = t.plain || '';
+  const tech  = t.tech  || '';
+  const body  = plain
+    ? plain + (tech ? `<span style="display:block;margin-top:5px;opacity:.55;font-size:9.5px">${tech}</span>` : '')
+    : tech;
+  return `<span class="tip-wrap">${label}<span class="tip-icon">i</span><span class="tip-box">${body}</span></span>`;
+}
+
+function shortDesc(key) {
+  const t = TIPS[key];
+  return (t && t.short) ? t.short : '';
+}
+
+function classLabel(cls) {
+  const m = {FR:'Freshman',SO:'Sophomore',JR:'Junior',SR:'Senior'};
+  return m[cls] || cls;
+}
+
+// ── ROSTER ──────────────────────────────────────────────
+function renderRoster() {
+  const grid = document.getElementById('roster-grid');
+  grid.innerHTML = PLAYERS.map((p,i) => {
+    const s = p.s26;
+    const isBench = s.MP < 15;
+    return `<div class="pcard${isBench ? ' bench' : ''}" onclick="showPlayer(${i})">
+      <img src="${p.info.photo}" alt="${p.info.name}" onerror="this.style.background='#E8E2DC'">
+      <div class="pcard-body">
+        <div class="pcard-num">#${p.info.number}</div>
+        <div class="pcard-name">${p.info.name}</div>
+        <div class="pcard-meta">${p.info.pos} · ${classLabel(p.info.class)} · ${p.info.height}, ${p.info.weight} lbs</div>
+        <div class="pcard-stats">
+          <div class="pcard-stat"><div class="pcard-stat-v">${s.G}</div><div class="pcard-stat-l">Games</div></div>
+          <div class="pcard-stat"><div class="pcard-stat-v">${fv(s.MP)}</div><div class="pcard-stat-l">MPG</div></div>
+          <div class="pcard-stat"><div class="pcard-stat-v">${fv(s.PTS)}</div><div class="pcard-stat-l">PPG</div></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── NAV ─────────────────────────────────────────────────
+function showPlayer(i) {
+  CUR = PLAYERS[i];
+  activeChartKey = null;
+  history.replaceState(null, '', '#' + playerSlug(i));
+  document.getElementById('pg1').style.display = 'none';
+  document.getElementById('pg2').style.display = 'block';
+  document.getElementById('phdr-name').textContent = CUR.info.name;
+  document.getElementById('phdr-sub').textContent =
+    `#${CUR.info.number} · ${CUR.info.pos} · ${classLabel(CUR.info.class)} · ${CUR.info.hometown}`;
+  window.scrollTo(0,0);
+  if (compChart) { compChart.destroy(); compChart = null; }
+  if (arcChart) { arcChart.destroy(); arcChart = null; }
+  document.getElementById('comp-chart-area').style.display = 'none';
+  document.getElementById('comp-instructions').style.display = 'block';
+  const sel = document.getElementById('player-select');
+  sel.innerHTML = PLAYERS.map((p,j) => `<option value="${j}"${j===i?' selected':''}>${p.info.name}</option>`).join('');
+  sel.onchange = () => showPlayer(+sel.value);
+  const csel = document.getElementById('comp-select');
+  COMP = null;
+  csel.innerHTML = '<option value="">Compare a teammate</option>' +
+    PLAYERS.map((p,j) => j !== i ? `<option value="${j}">${p.info.name}</option>` : '').filter(Boolean).join('');
+  csel.onchange = () => {
+    COMP = csel.value !== '' ? PLAYERS[+csel.value] : null;
+    if (compChart) { compChart.destroy(); compChart = null; }
+    document.getElementById('comp-chart-area').style.display = 'none';
+    document.getElementById('comp-instructions').style.display = 'block';
+    activeChartKey = null;
+    renderSnapshot(CUR);
+    renderArc(CUR);
+  };
+  renderSnapshot(CUR);
+  renderArc(CUR);
+  renderYoY(CUR);
+}
+
+document.getElementById('back-btn').onclick = () => {
+  document.getElementById('pg2').style.display = 'none';
+  document.getElementById('pg1').style.display = 'block';
+  if (compChart) { compChart.destroy(); compChart = null; }
+  if (arcChart) { arcChart.destroy(); arcChart = null; }
+  history.replaceState(null, '', location.pathname);
+};
+
+// ── SNAPSHOT ─────────────────────────────────────────────
+function renderSnapshot(p) {
+  const s = p.s26;
+  const cs = COMP ? COMP.s26 : null;
+  const cnm = COMP ? COMP.info.name.split(' ').slice(-1)[0] : '';
+
+  const cv = (key, fmt) => cs
+    ? `<div class="m-comp"><span class="m-comp-v">${fv(cs[key],fmt||'')}</span><span class="m-comp-n">${cnm}</span></div>`
+    : '';
+
+  const b = (lbl, primary, sec1, sec2) => {
+    const pHtml = `<div class="m-primary clickable-m" data-chart="${primary.chart}">
+      <div class="m-val">${primary.val}</div>
+      <div class="m-lbl">${primary.label}</div>
+      ${primary.desc ? `<div class="m-desc">${primary.desc}</div>` : ''}
+      ${primary.ck ? cv(primary.ck, primary.cf) : ''}
+    </div>`;
+    const sHtml = (cells) => cells.map(c =>
+      `<div class="m-cell clickable-m" data-chart="${c.chart}">
+        <div class="m-val">${c.val}</div>
+        <div class="m-lbl">${c.label}</div>
+        ${c.desc ? `<div class="m-desc">${c.desc}</div>` : ''}
+        ${c.ck ? cv(c.ck, c.cf) : ''}
+      </div>`
+    ).join('');
+    const cells = [sec1, sec2].filter(Boolean);
+    return `<div class="bucket">
+      <div class="bucket-lbl">${lbl}</div>
+      ${pHtml}
+      <div class="m-sec-row">${sHtml(cells)}</div>
+    </div>`;
+  };
+
+  const buckets = [
+    b('Shooting',
+      {chart:'pts',       val:fv(s.PTS),             ck:'PTS',              label:'Points / Game',                           desc:'season average'},
+      {chart:'ts_usg',    val:fv(s.TS,'pct'),         ck:'TS',   cf:'pct',  label:tipHtml('TS','Scoring Efficiency'),         desc:shortDesc('TS')},
+      {chart:'ts_usg',    val:fv(s.USG,'usg'),        ck:'USG',  cf:'usg',  label:tipHtml('USG','Usage Rate'),               desc:shortDesc('USG')}
+    ),
+    b('Playmaking',
+      {chart:'ast_tov',   val:fv(s.AST_TOV,'ratio'),  ck:'AST_TOV',cf:'ratio', label:tipHtml('AST_TOV','Assist / Turnover'), desc:shortDesc('AST_TOV')},
+      {chart:'ast_vs_tov',val:fv(s.AST),              ck:'AST',              label:'Assists / Game'},
+      {chart:'ast_vs_tov',val:fv(s.TOV),              ck:'TOV',              label:'Turnovers / Game'}
+    ),
+    b('Rebounds',
+      {chart:'trb',       val:fv(s.TRB),              ck:'TRB',              label:'Rebounds / Game',                         desc:'total per game'},
+      {chart:'orb_drb',   val:fv(s.ORB),              ck:'ORB',              label:'Off. Boards'},
+      {chart:'orb_drb',   val:fv(s.DRB),              ck:'DRB',              label:'Def. Boards'}
+    ),
+    b('Defense',
+      {chart:'stl',       val:fv(s.STL),              ck:'STL',              label:'Steals / Game'},
+      {chart:'blk',       val:fv(s.BLK),              ck:'BLK',              label:'Blocks / Game'},
+      {chart:'pf',        val:fv(s.PF),               ck:'PF',               label:'Fouls / Game',                            desc:'lower is better'}
+    ),
+    b('Impact',
+      {chart:'bpm',       val:fv(s.BPM,'bpm'),        ck:'BPM',  cf:'bpm',  label:tipHtml('BPM','Overall Impact'),           desc:shortDesc('BPM')},
+      {chart:'obpm_dbpm', val:fv(s.OBPM,'bpm'),       ck:'OBPM', cf:'bpm',  label:tipHtml('OBPM','Offensive Impact'),        desc:shortDesc('OBPM')},
+      {chart:'obpm_dbpm', val:fv(s.DBPM,'bpm'),       ck:'DBPM', cf:'bpm',  label:tipHtml('DBPM','Defensive Impact'),        desc:shortDesc('DBPM')}
+    ),
+  ];
+
+  document.getElementById('buckets').innerHTML = buckets.join('');
+
+  document.querySelectorAll('.clickable-m').forEach(el => {
+    el.addEventListener('click', () => {
+      const key = el.dataset.chart;
+      if (activeChartKey === key) return;
+      document.querySelectorAll('.clickable-m').forEach(e => e.classList.remove('active'));
+      document.querySelectorAll(`[data-chart="${key}"]`).forEach(e => e.classList.add('active'));
+      activeChartKey = key;
+      showComparison(key);
+    });
+  });
+}
+
+function showComparison(key) {
+  const cfg = CHART_CFGS[key];
+  document.getElementById('comp-instructions').style.display = 'none';
+  document.getElementById('comp-chart-area').style.display = 'block';
+  document.getElementById('chart-title').textContent = cfg.label || key;
+  const noteEl = document.getElementById('chart-note');
+  const guideEl = document.getElementById('chart-guide');
+  if (cfg.type === 'rank') {
+    const curVal = CUR.s26[cfg.key] ?? 0;
+    const rank = PLAYERS.filter(p => {
+      const v = p.s26[cfg.key] ?? 0;
+      return cfg.lowerBetter ? v < curVal : v > curVal;
+    }).length + 1;
+    const suffix = cfg.lowerBetter ? ' · Lower is better' : '';
+    noteEl.textContent = `${CUR.info.name.split(' ').slice(-1)[0]} ranks #${rank} of ${PLAYERS.length} on the roster${suffix}`;
+    guideEl.textContent = '';
+    guideEl.style.display = 'none';
+  } else {
+    noteEl.textContent = '';
+    guideEl.textContent = cfg.guide ? cfg.guide.note : '';
+    guideEl.style.display = cfg.guide ? 'block' : 'none';
+  }
+
+  if (compChart) { compChart.destroy(); compChart = null; }
+  const ctx = document.getElementById('comp-chart').getContext('2d');
+
+  if (cfg.type === 'rank') {
+    renderRankChart(ctx, cfg);
+  } else {
+    renderScatterChart(ctx, cfg);
+  }
+}
+
+function renderRankChart(ctx, cfg) {
+  const {key, lowerBetter, fmt} = cfg;
+  const fmtFn = fmt === 'bpm' ? v => (v>=0?'+':'')+v.toFixed(1) : v => v.toFixed(1);
+  const entries = PLAYERS.map(p => ({
+    name: p.info.name.split(' ').slice(-1)[0],
+    val: p.s26[key] ?? 0,
+    isSel: p === CUR,
+    isComp: p === COMP,
+  })).sort((a,b) => lowerBetter ? a.val - b.val : b.val - a.val);
+
+  compChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: entries.map(e => e.name),
+      datasets: [{
+        data: entries.map(e => e.val),
+        backgroundColor: entries.map(e => e.isSel ? '#A41034' : e.isComp ? 'rgba(37,99,235,0.75)' : '#D4CCC7'),
+        borderRadius: 3,
+        barThickness: 14,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {display:false},
+        tooltip: {callbacks:{label: ctx => ' '+fmtFn(ctx.parsed.x)}}
+      },
+      scales: {
+        x: {grid:{color:'#F0EBE7'}, ticks:{font:{size:11}}},
+        y: {grid:{display:false}, ticks:{font:{size:11,weight: entry => entries[entry.index]?.isSel ? 'bold':'normal'}}}
+      }
+    }
+  });
+}
+
+function makeGuidePlugin(guide) {
+  if (!guide) return null;
+  return {
+    id:'guide',
+    beforeDatasetsDraw(chart) {
+      if (guide.type !== 'quadrant_zero') return;
+      const {ctx, scales:{x,y}, chartArea:ca} = chart;
+      if (!ca) return;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(90,85,80,0.18)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4,3]);
+      const x0 = x.getPixelForValue(0);
+      const y0 = y.getPixelForValue(0);
+      if (x0 >= ca.left && x0 <= ca.right) {
+        ctx.beginPath(); ctx.moveTo(x0, ca.top); ctx.lineTo(x0, ca.bottom); ctx.stroke();
+      }
+      if (y0 >= ca.top && y0 <= ca.bottom) {
+        ctx.beginPath(); ctx.moveTo(ca.left, y0); ctx.lineTo(ca.right, y0); ctx.stroke();
+      }
+      ctx.restore();
+    },
+    afterDatasetsDraw(chart) {
+      const {ctx, scales:{x,y}, chartArea:ca} = chart;
+      if (!ca) return;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(90,85,80,0.22)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4,4]);
+
+      if (guide.type === 'diagonal' || guide.type === 'quadrant_zero') {
+        const mn = Math.min(x.min, y.min), mx = Math.max(x.max, y.max);
+        const px0 = x.getPixelForValue(mn), py0 = y.getPixelForValue(mn);
+        const px1 = x.getPixelForValue(mx), py1 = y.getPixelForValue(mx);
+        ctx.beginPath(); ctx.moveTo(px0, py0); ctx.lineTo(px1, py1); ctx.stroke();
+      }
+      if (guide.type === 'quadrant') {
+        const xMid = x.getPixelForValue(guide.xMid);
+        const yMid = y.getPixelForValue(guide.yMid);
+        if (xMid >= ca.left && xMid <= ca.right) {
+          ctx.beginPath(); ctx.moveTo(xMid, ca.top); ctx.lineTo(xMid, ca.bottom); ctx.stroke();
+        }
+        if (yMid >= ca.top && yMid <= ca.bottom) {
+          ctx.beginPath(); ctx.moveTo(ca.left, yMid); ctx.lineTo(ca.right, yMid); ctx.stroke();
+        }
+      }
+      ctx.setLineDash([]);
+
+      if (guide.labels) {
+        const {tr,tl,br,bl} = guide.labels;
+        ctx.font = '9.5px -apple-system,sans-serif';
+        ctx.fillStyle = 'rgba(90,85,80,0.45)';
+        if (tr) ctx.fillText(tr, ca.right - ctx.measureText(tr).width - 6, ca.top + 13);
+        if (tl) ctx.fillText(tl, ca.left + 6, ca.top + 13);
+        if (br) ctx.fillText(br, ca.right - ctx.measureText(br).width - 6, ca.bottom - 6);
+        if (bl) ctx.fillText(bl, ca.left + 6, ca.bottom - 6);
+      }
+      ctx.restore();
+    }
+  };
+}
+
+function renderScatterChart(ctx, cfg) {
+  const {xKey, yKey, xLabel, yLabel, xFmt, yFmt} = cfg;
+  const xF = xFmt || (v => v.toFixed(1));
+  const yF = yFmt || (v => v.toFixed(1));
+
+  const others = PLAYERS.filter(p => p !== CUR && p !== COMP).map(p => ({
+    x: p.s26[xKey] ?? 0, y: p.s26[yKey] ?? 0, name: p.info.name.split(' ').slice(-1)[0]
+  }));
+  const sel = [{x: CUR.s26[xKey] ?? 0, y: CUR.s26[yKey] ?? 0, name: CUR.info.name.split(' ').slice(-1)[0]}];
+  const compDot = COMP ? [{x: COMP.s26[xKey] ?? 0, y: COMP.s26[yKey] ?? 0, name: COMP.info.name.split(' ').slice(-1)[0]}] : [];
+
+  const guidePlugin = makeGuidePlugin(cfg.guide);
+  compChart = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        {label:'Roster', data:others, backgroundColor:'rgba(155,148,144,0.55)', pointRadius:6, pointHoverRadius:8},
+        ...(COMP ? [{label:COMP.info.name, data:compDot, backgroundColor:'rgba(37,99,235,0.75)', pointRadius:9, pointHoverRadius:11}] : []),
+        {label:CUR.info.name, data:sel, backgroundColor:'#A41034', pointRadius:10, pointHoverRadius:12},
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: {
+        legend:{display:false},
+        tooltip:{callbacks:{
+          label: ctx => {
+            const d = ctx.raw;
+            return ` ${d.name}: ${xF(d.x)}, ${yF(d.y)}`;
+          }
+        }}
+      },
+      scales: {
+        x:{title:{display:true,text:xLabel,font:{size:11}}, grid:{color:'#F0EBE7'}, ticks:{font:{size:11}}},
+        y:{title:{display:true,text:yLabel,font:{size:11}}, grid:{color:'#F0EBE7'}, ticks:{font:{size:11}}},
+      }
+    },
+    plugins: guidePlugin ? [guidePlugin] : []
+  });
+}
+
+// ── SEASON ARC ───────────────────────────────────────────
+function linreg(pts) {
+  const n = pts.length; if (!n) return null;
+  const sx=pts.reduce((s,p)=>s+p.x,0), sy=pts.reduce((s,p)=>s+p.y,0);
+  const sxy=pts.reduce((s,p)=>s+p.x*p.y,0), sx2=pts.reduce((s,p)=>s+p.x*p.x,0);
+  const m=(n*sxy-sx*sy)/(n*sx2-sx*sx||1);
+  const b=(sy-m*sx)/n;
+  return {m,b};
+}
+
+const FIRST_IVY = Math.min(...PLAYERS.flatMap(p=>p.games.filter(g=>g.conf).map(g=>g.g)).filter(g=>g>0));
+
+const OPP_ABBREV = {
+  'New Hampshire':'UNH','Massachusetts':'UMass','Boston University':'BU',
+  'Boston College':'BC','Penn State':'PSU',"St. John's (NY)":'StJohn','Pennsylvania':'Penn',
+  'Holy Cross':'H.Crs'
+};
+function abbrevOpp(opp) {
+  if (OPP_ABBREV[opp]) return OPP_ABBREV[opp];
+  return opp.replace(/\s*\(.*\)\s*$/, '').trim().split(' ')[0].slice(0, 6);
+}
+
+function renderArc(p) {
+  if (arcChart) { arcChart.destroy(); arcChart = null; }
+  document.getElementById('arc-sub').innerHTML =
+    tipHtml('GS','Game Score') + ' rates each performance on a single number — below 0 is a rough night, 10 or above is a solid outing, 20 or above is excellent. The four cards below capture his season at a glance; the chart traces it game by game. Solid = win · Hollow = loss · Darker = Ivy League · Hover any dot for details.';
+
+  const games = p.games;
+  if (!games.length) {
+    document.getElementById('arc-sub').textContent = 'No game data available.';
+    document.getElementById('arc-meta').innerHTML = '';
+    return;
+  }
+
+  // 4-chip arc meta
+  const bestGame  = games.reduce((b,g) => g.sc > b.sc ? g : b, games[0]);
+  const worstGame = games.reduce((b,g) => g.sc < b.sc ? g : b, games[0]);
+  const ivyGames  = games.filter(g => g.conf);
+  const ncGames   = games.filter(g => !g.conf);
+  const ivyAvg    = ivyGames.length ? ivyGames.reduce((s,g) => s+g.sc, 0)/ivyGames.length : null;
+  const ncAvg     = ncGames.length  ? ncGames.reduce((s,g)  => s+g.sc, 0)/ncGames.length  : null;
+  const fmtDt = d => new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+
+  const compChips = (COMP && COMP.games.length) ? (() => {
+    const cg2 = COMP.games;
+    const nm  = COMP.info.name.split(' ').slice(-1)[0];
+    const mk  = v => v !== null ? `<div class="arc-meta-comp">${v}<span>${nm}</span></div>` : '';
+    const cBst = cg2.reduce((b,g) => g.sc > b.sc ? g : b, cg2[0]);
+    const cWst = cg2.reduce((b,g) => g.sc < b.sc ? g : b, cg2[0]);
+    const cIv  = cg2.filter(g => g.conf), cNc2 = cg2.filter(g => !g.conf);
+    return {
+      best:  mk(cBst.sc.toFixed(1)),
+      worst: mk(cWst.sc.toFixed(1)),
+      ivy:   mk(cIv.length  ? (cIv.reduce((s,g) => s+g.sc, 0)/cIv.length).toFixed(1)  : null),
+      nc:    mk(cNc2.length ? (cNc2.reduce((s,g) => s+g.sc, 0)/cNc2.length).toFixed(1) : null),
+    };
+  })() : {best:'', worst:'', ivy:'', nc:''};
+  document.getElementById('arc-meta').innerHTML = [
+    `<div class="arc-meta-stat"><div class="arc-meta-val">${bestGame.sc.toFixed(1)}</div><div class="arc-meta-lbl">Season High</div><div class="arc-meta-sub">vs. ${bestGame.opp} · ${fmtDt(bestGame.date)}</div>${compChips.best}</div>`,
+    `<div class="arc-meta-stat"><div class="arc-meta-val" style="color:var(--soft)">${worstGame.sc.toFixed(1)}</div><div class="arc-meta-lbl">Season Low</div><div class="arc-meta-sub">vs. ${worstGame.opp} · ${fmtDt(worstGame.date)}</div>${compChips.worst}</div>`,
+    ivyAvg !== null ? `<div class="arc-meta-stat"><div class="arc-meta-val" style="color:var(--text)">${ivyAvg.toFixed(1)}</div><div class="arc-meta-lbl">Ivy League Avg</div><div class="arc-meta-sub">${ivyGames.length} games</div>${compChips.ivy}</div>` : '',
+    ncAvg  !== null ? `<div class="arc-meta-stat"><div class="arc-meta-val" style="color:var(--text)">${ncAvg.toFixed(1)}</div><div class="arc-meta-lbl">Non-Conf Avg</div><div class="arc-meta-sub">${ncGames.length} games</div>${compChips.nc}</div>` : '',
+  ].join('');
+
+  // Transposed game log matrix
+  const GL = [
+    {key:'pts',label:'PTS'}, {key:'trb',label:'REB'}, {key:'ast',label:'AST'},
+    {key:'stl',label:'STL'}, {key:'blk',label:'BLK'}, {key:'tov',label:'TOV'},
+    {key:'sc', label:'GS',  fmt:v=>v.toFixed(1), color:true},
+  ];
+  const glmHead = games.map(g => {
+    const cls = g.win ? 'glm-w' : 'glm-l';
+    const dot = g.conf ? '<span class="glm-conf-dot">●</span>' : '';
+    return `<th class="glm-game ${cls}">${abbrevOpp(g.opp)}${dot}</th>`;
+  }).join('');
+  const glmRows = GL.map(s => {
+    const cells = games.map(g => {
+      const v = g[s.key];
+      const val = s.fmt ? s.fmt(v) : (v === 0 ? '0' : String(v));
+      let cls = '';
+      if (s.color) {
+        if (v >= 20) cls = 'glm-exc';
+        else if (v >= 10) cls = 'glm-solid';
+        else if (v < 0) cls = 'glm-neg';
+      }
+      return `<td${cls?' class="'+cls+'"':''}>${val}</td>`;
+    }).join('');
+    return `<tr><td class="glm-label">${s.label}</td>${cells}</tr>`;
+  }).join('');
+  document.getElementById('game-log').innerHTML =
+    `<thead><tr><th class="glm-label"></th>${glmHead}</tr></thead><tbody>${glmRows}</tbody>`;
+
+  // Reset game log toggle
+  const logWrap = document.getElementById('game-log-wrap');
+  const logBtn  = document.getElementById('game-log-btn');
+  logWrap.style.display = 'none';
+  logBtn.textContent = 'Show game log ▾';
+  logBtn.onclick = function() {
+    const open = logWrap.style.display !== 'none';
+    logWrap.style.display = open ? 'none' : 'block';
+    this.textContent = open ? 'Show game log ▾' : 'Hide game log ▲';
+  };
+
+  const arcCompBtn = document.getElementById('arc-comp-btn');
+  const arcCompWrap = document.getElementById('arc-comp-wrap');
+  if (COMP && COMP.games.length) {
+    const compGs = COMP.games;
+    const cName  = COMP.info.name.split(' ').slice(-1)[0];
+    const cName2 = CUR.info.name.split(' ').slice(-1)[0];
+    const gsMap  = Object.fromEntries(games.map(g => [g.g, g]));
+    const cgMap  = Object.fromEntries(compGs.map(g => [g.g, g]));
+    const allG   = [...new Set([...Object.keys(gsMap), ...Object.keys(cgMap)].map(Number))].sort((a,b)=>a-b);
+    const gcls   = v => v >= 20 ? 'glm-exc' : v >= 10 ? 'glm-solid' : v < 0 ? 'glm-neg' : '';
+    const gRows  = allG.map(gn => {
+      const ce = gsMap[gn], co = cgMap[gn];
+      const opp = ce ? ce.opp : (co ? co.opp : '');
+      const win = ce ? (ce.win ? '<span class="gl-win">W</span>' : '<span class="gl-loss">L</span>') : '';
+      const dot = ((ce && ce.conf) || (co && co.conf)) ? '<span class="glm-conf-dot">●</span>' : '';
+      const cTd = ce ? `<td${gcls(ce.sc)?' class="'+gcls(ce.sc)+'"':''}>${ce.sc.toFixed(1)}</td>` : '<td class="arc-cmp-miss">—</td>';
+      const oTd = co ? `<td${gcls(co.sc)?' class="'+gcls(co.sc)+'"':''}>${co.sc.toFixed(1)}</td>` : '<td class="arc-cmp-miss">—</td>';
+      return `<tr><td class="arc-cmp-gn">${gn}</td><td class="arc-cmp-opp">${opp}${dot} ${win}</td>${cTd}${oTd}</tr>`;
+    }).join('');
+    arcCompWrap.innerHTML = `<div id="arc-comp-inner"><table class="arc-comp-table">
+      <thead><tr><th class="arc-cmp-gn">#</th><th class="arc-cmp-opp">Opponent</th><th>${cName2}</th><th>${cName}</th></tr></thead>
+      <tbody>${gRows}</tbody>
+    </table></div>`;
+    arcCompBtn.style.display = 'block';
+    arcCompWrap.style.display = 'none';
+    arcCompBtn.textContent = `Game-by-game vs. ${cName} ▾`;
+    arcCompBtn.onclick = function() {
+      const open = arcCompWrap.style.display !== 'none';
+      arcCompWrap.style.display = open ? 'none' : 'block';
+      this.textContent = open ? `Game-by-game vs. ${cName} ▾` : 'Hide comparison ▲';
+    };
+  } else {
+    arcCompBtn.style.display = 'none';
+    arcCompWrap.style.display = 'none';
+  }
+
+  const pts = games.map(g => ({
+    x:g.g, y:g.sc, opp:g.opp, date:g.date, conf:g.conf,
+    loc:g.loc, win:g.win, pts:g.pts, ast:g.ast, trb:g.trb
+  }));
+  const maxG = Math.max(...pts.map(p=>p.x));
+  const reg  = linreg(pts);
+  const trendData = reg ? [
+    {x:pts[0].x, y:reg.m*pts[0].x+reg.b},
+    {x:maxG,     y:reg.m*maxG+reg.b}
+  ] : [];
+
+  const ptBg    = g => g.win ? (g.conf ? '#A41034' : 'rgba(164,16,52,0.45)') : 'transparent';
+  const ptBd    = g => g.conf ? '#A41034' : 'rgba(164,16,52,0.55)';
+  const ptBdW   = g => g.win ? 1.5 : 2.5;
+
+  const datasets = [
+    {type:'scatter',label:CUR.info.name,data:pts,
+     backgroundColor:pts.map(ptBg),borderColor:pts.map(ptBd),borderWidth:pts.map(ptBdW),
+     pointRadius:6,pointHoverRadius:9,order:1},
+    {type:'line',label:'Trend',data:trendData,
+     borderColor:'rgba(164,16,52,0.3)',borderWidth:2,pointRadius:0,fill:false,tension:0,order:2}
+  ];
+
+
+  const arcPlugin = {
+    id:'arcOverlay',
+    beforeDatasetsDraw(chart) {
+      const {ctx,scales:{x,y},chartArea:ca}=chart; if(!ca) return;
+      ctx.save();
+      const y0=y.getPixelForValue(0), y10=y.getPixelForValue(10), y20=y.getPixelForValue(20);
+      if(y0<ca.bottom){ctx.fillStyle='rgba(164,16,52,0.07)';ctx.fillRect(ca.left,Math.max(y0,ca.top),ca.width,ca.bottom-Math.max(y0,ca.top));}
+      const b10t=Math.max(Math.min(y10,ca.bottom),ca.top), b10b=Math.max(Math.min(y0,ca.bottom),ca.top);
+      if(b10b>b10t){ctx.fillStyle='rgba(26,122,56,0.06)';ctx.fillRect(ca.left,b10t,ca.width,b10b-b10t);}
+      const b20t=Math.max(Math.min(y20,ca.bottom),ca.top), b20b=Math.max(Math.min(y10,ca.bottom),ca.top);
+      if(b20b>b20t){ctx.fillStyle='rgba(26,122,56,0.11)';ctx.fillRect(ca.left,b20t,ca.width,b20b-b20t);}
+      const a20b=Math.max(Math.min(y20,ca.bottom),ca.top);
+      if(a20b>ca.top){ctx.fillStyle='rgba(26,122,56,0.16)';ctx.fillRect(ca.left,ca.top,ca.width,a20b-ca.top);}
+      ctx.restore();
+    },
+    afterDraw(chart) {
+      const {ctx,scales:{x,y},chartArea:ca}=chart; if(!ca) return;
+      ctx.save();
+      const xp=x.getPixelForValue(FIRST_IVY-0.5);
+      ctx.beginPath();ctx.strokeStyle='#A41034';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);
+      ctx.moveTo(xp,ca.top);ctx.lineTo(xp,ca.bottom);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle='#A41034';ctx.font='10px -apple-system,sans-serif';
+      ctx.fillText('Ivy League',xp+4,ca.top+12);
+      ctx.restore();
+    }
+  };
+
+  const ctx = document.getElementById('arc-chart').getContext('2d');
+  arcChart = new Chart(ctx,{
+    type:'scatter',
+    data:{datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{
+          title:ctx=>{
+            if(!ctx.length) return null;
+            const lbl=ctx[0].dataset.label;
+            if(!lbl||lbl==='Trend'||lbl==='Trend2') return null;
+            const d=ctx[0].raw;
+            const loc=d.loc==='H'?'Home':d.loc==='A'?'Away':'Neutral';
+            return `${lbl} · Game ${d.x} · ${loc} · ${d.conf?'Ivy':'Non-Conf'}`;
+          },
+          label:ctx=>{
+            const lbl=ctx.dataset.label;
+            if(!lbl||lbl==='Trend'||lbl==='Trend2') return null;
+            const d=ctx.raw;
+            const dt=fmtDt(d.date);
+            return [` vs. ${d.opp} · ${dt} · ${d.win?'W':'L'}`,` ${d.pts} pts · ${d.ast} ast · ${d.trb} reb · GS: ${d.y}`];
+          }
+        }}
+      },
+      scales:{
+        x:{title:{display:true,text:'Game #',font:{size:11}},grid:{color:'#F0EBE7'},ticks:{stepSize:2,font:{size:11}}},
+        y:{title:{display:true,text:'Game Score',font:{size:11}},grid:{color:'#F0EBE7'},ticks:{font:{size:11}}}
+      }
+    },
+    plugins:[arcPlugin]
+  });
+}
+
+// ── YEAR OVER YEAR ───────────────────────────────────────
+const YOY_METRICS = [
+  {key:'USG',     name:'Usage Rate',              q:'Was he asked to do more?',                       fmt:'usg',   neutral:true,  threshold:0.5},
+  {key:'TS',      name:'Scoring Efficiency',      q:'Did his scoring hold up?',                       fmt:'pct',   neutral:false, threshold:0.01},
+  {key:'TRB',     name:'Rebounds per Game',       q:'Did he become a bigger presence on the boards?', fmt:'default',neutral:false,threshold:0.3},
+  {key:'AST_TOV', name:'Assist / Turnover Ratio', q:'Did his decisions mature?',                      fmt:'ratio', neutral:false, threshold:0.1},
+  {key:'OBPM',    name:'Offensive Impact',        q:'Did he make the offense better?',                 fmt:'bpm',   neutral:false, threshold:0.2},
+  {key:'DBPM',    name:'Defensive Impact',        q:'Did he become a stronger defensive presence?',                 fmt:'bpm',   neutral:false, threshold:0.2},
+];
+
+const WITH_PREV = PLAYERS.filter(p => p.s25);
+
+function renderYoY(p) {
+  const el = document.getElementById('yoy-content');
+  if (!p.s25) {
+    el.innerHTML = '<div class="yoy-no-data">First season at Harvard — no prior year comparison available.</div>';
+    return;
+  }
+  const fmtV = (v, fmt) => {
+    if (fmt==='pct')   return (v*100).toFixed(1)+'%';
+    if (fmt==='usg')   return v.toFixed(1)+'%';
+    if (fmt==='bpm')   return (v>=0?'+':'')+v.toFixed(1);
+    if (fmt==='ratio') return v.toFixed(2);
+    return v.toFixed(1);
+  };
+  const cards = YOY_METRICS.map(m => {
+    const v24 = p.s25[m.key], v25 = p.s26[m.key];
+    const diff = v25 - v24;
+    const absDiff = Math.abs(diff);
+    let deltaStr, cls;
+    if (absDiff < m.threshold) {
+      deltaStr = '→ No change'; cls = 'flat';
+    } else {
+      const sign = diff > 0 ? '▲ +' : '▼ −';
+      deltaStr = sign + fmtV(absDiff, m.fmt);
+      cls = m.neutral ? (diff>0?'neutral-up':'neutral-down') : (diff>0?'up':'down');
+    }
+    const rank = WITH_PREV.filter(pl => (pl.s26[m.key]-pl.s25[m.key]) > diff).length + 1;
+    return `<div class="yoy-card-new">
+      <div class="yoy-metric-nm">${m.name}</div>
+      <div class="yoy-q-new">${m.q}</div>
+      <div class="yoy-delta-big ${cls}">${deltaStr}</div>
+      <div class="yoy-from-to">
+        <div class="yoy-side">
+          <div class="yoy-side-val">${fmtV(v24, m.fmt)}</div>
+          <div class="yoy-side-lbl">24–25</div>
+        </div>
+        <div class="yoy-from-arrow">→</div>
+        <div class="yoy-side">
+          <div class="yoy-side-val">${fmtV(v25, m.fmt)}</div>
+          <div class="yoy-side-lbl">25–26</div>
+        </div>
+      </div>
+      <div class="yoy-rank">Improvement rank: #${rank} of ${WITH_PREV.length} returners</div>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="yoy-grid-new">${cards}</div>`;
+}
+
+// ── INIT ────────────────────────────────────────────────
+function playerSlug(i) {
+  return PLAYERS[i].info.name
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '');
+}
+
+document.getElementById('share-btn').onclick = () => {
+  navigator.clipboard.writeText(location.href).then(() => {
+    const btn = document.getElementById('share-btn');
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  });
+};
+
+function computeTeamRecord() {
+  const gMap = {}, ivyMap = {};
+  PLAYERS.forEach(p => p.games.forEach(g => {
+    gMap[g.g] = g.win;
+    if (g.conf) ivyMap[g.g] = g.win;
+  }));
+  const all = Object.values(gMap), ivy = Object.values(ivyMap);
+  return {
+    w: all.filter(Boolean).length, l: all.length - all.filter(Boolean).length,
+    ivyW: ivy.filter(Boolean).length, ivyL: ivy.length - ivy.filter(Boolean).length
+  };
+}
+
+function renderTeamSummary() {
+  const rec = computeTeamRecord();
+  const leaders = [
+    {key:'PTS', label:'Leading Scorer',    suf:'PPG'},
+    {key:'AST', label:'Assists Leader',   suf:'APG'},
+    {key:'TRB', label:'Leading Rebounder', suf:'RPG'},
+    {key:'STL', label:'Steals Leader',    suf:'SPG'},
+  ];
+  const chips = leaders.map(l => {
+    const top = PLAYERS.reduce((a,b) => b.s26[l.key] > a.s26[l.key] ? b : a);
+    return `<div class="ts-chip"><div class="ts-chip-val">${top.info.name.split(' ').slice(-1)[0]} · ${fv(top.s26[l.key])} ${l.suf}</div><div class="ts-chip-lbl">${l.label}</div></div>`;
+  }).join('');
+  document.getElementById('team-summary').innerHTML =
+    `<div class="ts-headline">Season at a glance</div>` +
+    `<div class="ts-chip"><div class="ts-chip-val">${rec.w}–${rec.l}</div><div class="ts-chip-lbl">Overall</div></div>` +
+    `<div class="ts-chip"><div class="ts-chip-val">${rec.ivyW}–${rec.ivyL}</div><div class="ts-chip-lbl">Ivy League</div></div>` +
+    chips;
+}
+
+renderRoster();
+renderTeamSummary();
+
+(function() {
+  const hash = location.hash.slice(1);
+  if (!hash) return;
+  for (let i = 0; i < PLAYERS.length; i++) {
+    if (playerSlug(i) === hash) { showPlayer(i); return; }
+  }
+})();
+
+</script>
+
+<div class="site-footer">
+  Built by <strong>Juan Carlos Orrego</strong> &nbsp;·&nbsp; Harvard Kennedy School &nbsp;·&nbsp; Stats: <a href="https://www.sports-reference.com/cbb/" target="_blank" rel="noopener">Sports Reference CBB</a>
+</div>
+
+</body>
+</html>
