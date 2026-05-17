@@ -5,11 +5,12 @@ A single-page web app built to impress Harvard Men's Basketball Assistant Coach 
 
 ## File structure
 ```
-/HMB
-├── index.html              ← men's tool (single file, no build step)
-├── index_womens.html       ← women's tool (same structure, gender-adapted)
-├── Pictures_improved/      ← men's player photos (webp)
-├── Pictures_womens/        ← women's player photos (webp)
+/crimson_basketball
+├── index.html              ← men's tool (complete, single file, no build step)
+├── index_womens.html       ← women's tool (NOT YET BUILT — photos + data ready)
+├── Pictures_improved/      ← men's player photos, improved quality (webp) — active
+├── Pictures_mens/          ← men's player photos, original fetch (webp)
+├── Pictures_womens/        ← women's player photos, ready to use (webp)
 ├── fetch_players.py        ← pipeline: ESPN + SR → PLAYERS JS array
 ├── fetch_photos.py         ← pipeline: ESPN CDN → webp photo folder
 ├── requirements.txt        ← pip dependencies (requests, beautifulsoup4, Pillow)
@@ -187,8 +188,31 @@ All 8 schools use the same slug on both ESPN and Sports-Reference:
 ---
 
 ## Pending / known gaps
-1. **Home/Away/Neutral on roster card** — user mentioned encoding H/A/N "perhaps only in the card" (Page 1 player cards). Not yet implemented. `loc` field already exists in game data.
-2. **Mobile responsiveness** — not implemented. Desktop-only by design.
+1. **Women's tool (`index_womens.html`)** — not yet built. Photos (`Pictures_womens/`) and data pipeline are ready. Build by adapting `index.html` with gender-appropriate pronouns and swapping the PLAYERS array.
+2. **Home/Away/Neutral on roster card** — user mentioned encoding H/A/N "perhaps only in the card" (Page 1 player cards). Not yet implemented. `loc` field already exists in game data.
+3. **Mobile responsiveness** — not implemented. Desktop-only by design.
+
+---
+
+## Side-project in development: Game-by-game analytical articles
+
+Inspired by **Basketmática** (X/Twitter), the goal is a tool or workflow to produce analytical game-review threads after each Harvard game — stat-driven, narrative-first, written for a basketball-literate audience.
+
+### Concept
+Each post covers one game and follows a structured arc:
+1. **Top performers** — Game Score leaderboard, framed as standout performances
+2. **Usage vs. efficiency** — USG% vs TS% scatter, highlighting who carried load profitably
+3. **Rolling form** — 5-game trend strip per player, identifying who is peaking or cold
+4. **Peripheral standouts** — contributions (assists, defensive plays, ORBs) that box scores bury
+5. **Narrative bullets** — plain-language story hooks that tie the numbers to the game's narrative
+
+### Data availability
+All required data already exists in the `PLAYERS` array (per-game `games[]` entries with `sc`, `pts`, `ast`, `trb`, `stl`, `blk`, `tov`, `win`, `conf`, `loc`). Season-level `USG` and `TS` are on `s26`. No new data collection needed.
+
+### Output format (undecided)
+- **Option A**: Add a "Game Report" page (Page 3) to the existing tool — pick a game by opponent/date, renders Basketmática-style dashboard visually
+- **Option B**: Writing-aid script that auto-generates draft narrative bullets + chart descriptions for a specific game, to be edited and posted as a thread
+- **Hybrid likely**: A visual tool whose chart panels map 1:1 to thread sections, and that also emits draft prose
 
 ## Data source
 [Sports Reference CBB](https://www.sports-reference.com/cbb/) — attributed in welcome panel and footer.
