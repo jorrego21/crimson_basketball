@@ -11628,7 +11628,8 @@ function showPlayer(i) {
     const activeLeague = ACTIVE_TEAM === 'womens' ? IVY_LEAGUE_WOMENS : IVY_LEAGUE;
     if (school && activeLeague[school]) {
       activeLeague[school].forEach((p, j) => {
-        ivyPSel.innerHTML += `<option value="${school}:${j}">${p.info.name}</option>`;
+        if (p.s26.MP >= 8 && p.s26.G >= 8)
+          ivyPSel.innerHTML += `<option value="${school}:${j}">${p.info.name}</option>`;
       });
       ivyPSel.disabled = false;
     } else {
